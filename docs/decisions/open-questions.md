@@ -27,10 +27,10 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | A-11 | `--add-dir` disebut read-only padahal memberi write | 🟡 sebagian — V-02 |
 | A-12 | Identitas & nama control repository | ✅ tertutup — Q1 |
 | A-13 | Repository pilot belum ditentukan | ✅ tertutup — Q2 |
-| A-14 | Base branch belum ditentukan | 🟡 sebagian — Q3 + D-01 |
+| A-14 | Base branch belum ditentukan | ✅ tertutup — Q3 + D-01 |
 | A-15 | Quality gate command belum diketahui | ✅ tertutup — Q4 |
 | A-16 | Distribusi agent per repository | ✅ tertutup — Q10 |
-| D-01 | Default branch pilot `master` vs control `main` | 🔴 **terbuka** |
+| D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | V-01…V-05 | Butuh uji empiris | ⏳ Phase 3–4 |
 
@@ -128,6 +128,51 @@ Tertutup oleh Q1, Q2, Q4, dan Q10. Lihat `phase-0-decision-log.md`.
 
 ---
 
+### A-14 — Base branch, dan D-01 — ketidakkonsistenan default branch
+
+**Tertutup 2026-07-29** dengan eksekusi normalisasi pada kedua repo pilot.
+
+**Koreksi terhadap catatan sebelumnya:** dokumen ini semula mencatat default branch
+kedua repo pilot sebagai `master` yang perlu di-*rename*. Pemeriksaan API menunjukkan
+kondisi sebenarnya berbeda: kedua repo **sepenuhnya kosong** — `isEmpty: true`,
+`diskUsage: 0`, **nol branch**. `master` hanya nilai setting `default_branch` bawaan
+akun, bukan branch yang ada. Karena itu tidak ada rename yang bisa dilakukan, dan
+flip setting ditolak API:
+
+```
+422 Cannot update default branch for an empty repository.
+    Please init the repository and push first.
+```
+
+**Konsekuensi:** `main`, `develop`, dan `staging` semuanya memerlukan commit untuk
+bisa eksis. Normalisasi karena itu berbentuk **seed commit**, bukan rename.
+
+**Yang dieksekusi** pada `m2s-vsh-project-backend` dan `m2s-vsh-project-frontend`:
+
+1. Seed commit di `main` — `README.md` (peran, stack, tabel branch, rujukan ADR-001)
+   dan `.gitignore` per stack mengikuti Q4 (Go untuk backend, Next.js untuk frontend).
+2. `default_branch` di-set ke `main` via API setelah push.
+3. `develop` dan `staging` dibuat dari commit `main` yang sama.
+
+**Kondisi akhir terverifikasi:**
+
+| Repository | Default branch | Branch |
+|---|---|---|
+| `m2s-vsh-platform` | `main` | `main` |
+| `m2s-vsh-project-backend` | `main` | `develop`, `main`, `staging` |
+| `m2s-vsh-project-frontend` | `main` | `develop`, `main`, `staging` |
+
+**Temuan sampingan:** kedua repo pilot berada di akun personal `fajarcandraaa` dan
+bersifat **public**, bukan di org `Mind2Screen-Dev-Team` seperti diasumsikan D-02.
+Public repo pada akun Free tetap mendukung branch protection — ini menguntungkan
+**AC-0.6** dan tidak terhalang plan Free. D-02 tetap terbuka untuk repo klien private.
+
+**Belum dikerjakan:** control repo `m2s-vsh-platform` hanya punya `main`. Apakah
+control repo juga memerlukan `develop`/`staging` belum diputuskan; §44 hanya
+mengatur repo project.
+
+---
+
 ## Isu tertutup sebagian
 
 ### A-02 — PM punya `Bash` sehingga hook Edit/Write terlewat
@@ -171,35 +216,7 @@ runner tidak pernah memberikan `--add-dir` ke repository yang bukan target task.
 
 ---
 
-### A-14 — Base branch
-
-**Tertutup sebagian (Q3):** `develop`/`staging` akan dibuat.
-
-**Sisa:** default branch repo pilot masih `master`. Lihat **D-01**.
-
----
-
 ## Isu terbuka
-
-### D-01 — Ketidakkonsistenan default branch 🔴
-
-| Repository | Default branch |
-|---|---|
-| `m2s-vsh-platform` | `main` |
-| `m2s-vsh-project-backend` | `master` |
-| `m2s-vsh-project-frontend` | `master` |
-
-**Dampak bila dibiarkan:** `base_branch` pada task contract menjadi tidak seragam;
-branch protection harus dikonfigurasi dua kali dengan nama berbeda; CI workflow
-memerlukan percabangan; §44 dokumen arsitektur menyebut `main` sebagai production.
-
-**Rekomendasi:** normalisasi kedua repo pilot ke `main` **sekarang**, selagi masih
-kosong (`size: 0`) sehingga tidak ada riwayat yang perlu dipindahkan dan tidak ada
-PR terbuka yang rusak. Biaya normalisasi akan meningkat setelah ada kode.
-
-**Menunggu keputusan pemilik arsitektur.**
-
----
 
 ### D-02 — Repository klien private tetap tanpa enforcement 🔴
 

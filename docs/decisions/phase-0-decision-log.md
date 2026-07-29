@@ -80,7 +80,10 @@ develop   integrasi — merge oleh TL/SA atau PM agent
 agent/<task-id>-<slug>   task branch
 ```
 
-**Terbuka:** default branch repo pilot masih `master`. Lihat **D-01**.
+**Tertutup 2026-07-29 (D-01):** `main`, `develop`, dan `staging` sudah ada di kedua
+repo pilot, dengan `main` sebagai default branch. Kedua repo ternyata sepenuhnya
+kosong (nol branch), bukan ber-`master` — normalisasi berbentuk seed commit, bukan
+rename. Detail di `open-questions.md` § A-14/D-01.
 
 ---
 
