@@ -1,1 +1,37 @@
+# ── OS ────────────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
+
+# ── Secret & credential (HARD RULE — lihat arsitektur §16.5, §42.3) ───
+# Pola ini juga ditegakkan lewat permissions.deny dan PreToolUse hook.
+# .gitignore adalah lapisan terakhir, bukan satu-satunya.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets/
+**/secrets/
+*.token
+.netrc
+
+# ── Runtime task context (disuntikkan runner, tidak boleh di-commit) ──
+# Snapshot task contract yang dimaterialisasi runner ke dalam worktree.
+.task/
+
+# ── Worktree (defensif — lokasi default ada di luar repo) ─────────────
+.worktrees/
+.m2s-worktrees/
+
+# ── Log & artefak eksekusi ────────────────────────────────────────────
+*.log
+logs/
+control/reservations/*.lock
+tmp/
+.cache/
+
+# ── Claude Code lokal (personal, tidak mengubah project behaviour) ────
+.claude/settings.local.json

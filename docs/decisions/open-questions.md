@@ -1,0 +1,244 @@
+# Open Questions & Ambiguity Register
+
+**Tanggal:** 29 Juli 2026
+**Sumber:** analisis `docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`
+**Status:** 12 tertutup, 4 tertutup sebagian, 2 terbuka, 5 menunggu uji empiris
+
+Register ini melacak setiap bagian dokumen arsitektur yang ambigu, kontradiktif,
+atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitektur,
+`D-*` untuk keputusan turunan yang masih terbuka, `V-*` untuk yang butuh verifikasi.
+
+---
+
+## Ringkasan status
+
+| Kode | Isu | Status |
+|---|---|---|
+| A-01 | `.claude/**` forbidden vs lokasi worktree | ✅ tertutup — Q8 |
+| A-02 | PM punya `Bash` sehingga hook Edit/Write terlewat | 🟡 sebagian — Q11 + R-07 |
+| A-03 | Reviewer `plan` mode vs writable path | ✅ tertutup — Q9 |
+| A-04 | TL/SA melanggar one-task-one-repository | ✅ tertutup — Q14 |
+| A-05 | Reservasi dilepas saat PR, tapi retry kembali `running` | ✅ tertutup — Q12 |
+| A-06 | Mneme fail-open tapi jadi required CI gate | ✅ tertutup — Q18 |
+| A-07 | Penempatan konfigurasi Ponytail | ✅ tertutup — Q17 |
+| A-08 | `git checkout` diblokir vs kebutuhan runner | ✅ tertutup — Q13 |
+| A-09 | Blocklist berbasis string mudah dielakkan | 🟡 sebagian — R-08, V-04 |
+| A-10 | Worktree install deps vs larangan install | ✅ tertutup |
+| A-11 | `--add-dir` disebut read-only padahal memberi write | 🟡 sebagian — V-02 |
+| A-12 | Identitas & nama control repository | ✅ tertutup — Q1 |
+| A-13 | Repository pilot belum ditentukan | ✅ tertutup — Q2 |
+| A-14 | Base branch belum ditentukan | 🟡 sebagian — Q3 + D-01 |
+| A-15 | Quality gate command belum diketahui | ✅ tertutup — Q4 |
+| A-16 | Distribusi agent per repository | ✅ tertutup — Q10 |
+| D-01 | Default branch pilot `master` vs control `main` | 🔴 **terbuka** |
+| D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
+| V-01…V-05 | Butuh uji empiris | ⏳ Phase 3–4 |
+
+---
+
+## Isu tertutup
+
+### A-01 — `.claude/**` forbidden sekaligus lokasi worktree
+
+**Kontradiksi:** §34 menempatkan `.claude/**` pada `paths.forbidden`, sementara §30
+menaruh worktree di `.claude/worktrees/BE-101`. Akar kerja agent berada di dalam
+path yang dilarang ditulisnya.
+
+**Resolusi (Q8):** worktree dipindah ke luar repo —
+`$HOME/.m2s/worktrees/<repository>/<task-id>`, override lewat `M2S_WORKTREE_ROOT`.
+`.claude/**` tetap forbidden seutuhnya tanpa pengecualian.
+
+---
+
+### A-03 — Reviewer plan mode vs writable path
+
+**Kontradiksi:** §23.6 memberi reviewer writable path `reviews/code/**`, sedangkan
+Appendix A memberinya `permissionMode: plan` dan tool tanpa `Write`/`Edit`.
+Dalam plan mode seluruh write diblokir.
+
+**Resolusi (Q9):** reviewer mengembalikan structured output; runner yang menuliskan
+ke `reviews/code/**`. Sifat read-only murni dipertahankan.
+
+---
+
+### A-04 — TL/SA melanggar one-task-one-repository
+
+**Kontradiksi:** writable path TL/SA (§18.6) menyebar ke minimal tiga lokasi,
+sedangkan §29.2 melarang satu task menulis lebih dari satu repository.
+
+**Resolusi (Q14):** seluruh artifact TL/SA dipusatkan di control repository.
+Hanya `.mneme/project_memory.json` yang berada di application repo, ditangani
+task type `MNEME-*` terpisah.
+
+---
+
+### A-05 — Celah reservasi antara PR dan merge
+
+**Kontradiksi:** §30 melepas reservasi saat PR dibuat; §33 mengizinkan
+`changes-requested → running`. Antara PR dan merge, path tidak terlindungi.
+
+**Resolusi (Q12):** reservasi ditahan sampai **merge**, dengan status antara
+`reserved-pending-merge`.
+
+---
+
+### A-06 — Mneme fail-open sebagai required gate
+
+**Kontradiksi:** §6.3 mengakui hook Mneme fail-open; §43 item 11 menjadikannya
+gate wajib.
+
+**Resolusi (Q18):** CI gate fail-closed. Hook lokal wajib `exit 2` (lihat T-01).
+Setiap hook security memiliki self-test.
+
+---
+
+### A-07 — Penempatan konfigurasi Ponytail
+
+**Ambiguitas:** §5.5 menyajikan env var dalam blok `bash` tanpa menyebut lokasinya.
+
+**Resolusi (Q17):** `.claude/settings.json` blok `env`. Version-controlled dan
+tidak dapat diubah engineer secara diam-diam (§5.6).
+
+---
+
+### A-08 — `git checkout` diblokir vs kebutuhan runner
+
+**Kontradiksi:** §42.2 memblokir `git checkout`/`git switch`, padahal
+`git worktree add` melakukan checkout internal.
+
+**Resolusi (Q13):** runner beroperasi di luar sesi agent, sehingga hook agent tidak
+berlaku padanya. Agent tidak pernah menjalankan perintah worktree/checkout.
+
+---
+
+### A-10 — Install dependency di worktree vs larangan install
+
+**Kontradiksi semu:** §42.6 mengizinkan hook menginstal project dependencies;
+§16.5 melarang agent menginstal package.
+
+**Resolusi:** tidak bertentangan, karena install dilakukan **runner** pada tahap
+bootstrap worktree, sebelum sesi agent dimulai. Ditegaskan eksplisit agar tidak
+disalahtafsirkan sebagai izin bagi agent.
+
+---
+
+### A-12, A-13, A-15, A-16
+
+Tertutup oleh Q1, Q2, Q4, dan Q10. Lihat `phase-0-decision-log.md`.
+
+---
+
+## Isu tertutup sebagian
+
+### A-02 — PM punya `Bash` sehingga hook Edit/Write terlewat
+
+**Sisa risiko:** `Bash` dapat menulis file lewat `>`, `tee`, `cp`, `sed -i`,
+`python -c` tanpa memicu hook Edit/Write.
+
+**Mitigasi terpasang (Q11):** tool `Agent` dicabut; `Bash` dibatasi hook ke pola
+persis `scripts/<runner>.sh`; write dibatasi `control/**`.
+
+**Sisa yang belum tertutup:** validasi write-effect dari perintah Bash arbitrer.
+Dilacak sebagai **R-07**, ditangani Phase 4 dengan CI changed-path validation
+sebagai jaring kedua.
+
+---
+
+### A-09 — Blocklist string mudah dielakkan
+
+**Sisa risiko:** daftar §42.2 adalah pencocokan teks. `git checkout` dapat menjadi
+`g=checkout; git $g`; `rm -rf` dapat menjadi `rm -r -f` atau `find … -delete`.
+
+**Diperkuat oleh temuan verifikasi:** dokumentasi Claude Code sendiri menyatakan
+filter perintah Bash dapat fail-open pada input yang tidak ter-parse, dan
+menyarankan permission system sebagai enforcement keras.
+
+**Posisi yang ditetapkan:** hook adalah **defense-in-depth**, bukan boundary.
+Boundary sebenarnya = `permissions.deny` + CI + branch protection.
+Dilacak sebagai **R-08**; uji elakan dijadwalkan sebagai **V-04**.
+
+---
+
+### A-11 — `--add-dir` disebut read-only
+
+**Sisa risiko:** §46 menyebut `--add-dir` "hanya untuk read context" sambil mengakui
+ia memberi file access. Ini konvensi, bukan enforcement.
+
+**Mitigasi rencana:** `permissions.deny` untuk Edit/Write pada direktori tambahan;
+runner tidak pernah memberikan `--add-dir` ke repository yang bukan target task.
+
+**Belum diverifikasi:** perilaku write sebenarnya. Dilacak sebagai **V-02**.
+
+---
+
+### A-14 — Base branch
+
+**Tertutup sebagian (Q3):** `develop`/`staging` akan dibuat.
+
+**Sisa:** default branch repo pilot masih `master`. Lihat **D-01**.
+
+---
+
+## Isu terbuka
+
+### D-01 — Ketidakkonsistenan default branch 🔴
+
+| Repository | Default branch |
+|---|---|
+| `m2s-vsh-platform` | `main` |
+| `m2s-vsh-project-backend` | `master` |
+| `m2s-vsh-project-frontend` | `master` |
+
+**Dampak bila dibiarkan:** `base_branch` pada task contract menjadi tidak seragam;
+branch protection harus dikonfigurasi dua kali dengan nama berbeda; CI workflow
+memerlukan percabangan; §44 dokumen arsitektur menyebut `main` sebagai production.
+
+**Rekomendasi:** normalisasi kedua repo pilot ke `main` **sekarang**, selagi masih
+kosong (`size: 0`) sehingga tidak ada riwayat yang perlu dipindahkan dan tidak ada
+PR terbuka yang rusak. Biaya normalisasi akan meningkat setelah ada kode.
+
+**Menunggu keputusan pemilik arsitektur.**
+
+---
+
+### D-02 — Repository klien private tetap tanpa enforcement 🔴
+
+**Kondisi:** organization `Mind2Screen-Dev-Team` berada pada plan **Free** dengan
+29 repository private. Seluruhnya tidak dapat memasang branch protection maupun
+rulesets.
+
+**Dampak:** jalur repository public membuktikan model arsitektur bekerja, tetapi
+**tidak dapat diterapkan pada project klien** yang wajib private. Untuk klien,
+lapisan anti-overlap #7 dan #8 tetap tidak tertegakkan.
+
+**Opsi:**
+
+| Opsi | Biaya | Catatan |
+|---|---|---|
+| Upgrade org ke GitHub Team | ~$4/seat/bulan × 14 seat | satu-satunya jalur yang mendukung target akhir |
+| Tetap Free, terima tanpa enforcement untuk klien | 0 | melanggar prinsip #7 dokumen arsitektur |
+
+**Hambatan:** peran pemilik arsitektur di org adalah `member`, bukan `owner`.
+Upgrade memerlukan persetujuan owner organization.
+
+**Menunggu keputusan.** Tidak memblokir Phase 0–8 pilot.
+
+---
+
+## Menunggu uji empiris
+
+| Kode | Pertanyaan | Dijadwalkan |
+|---|---|---|
+| V-01 | Apakah hook dapat membaca file di luar cwd? | *tidak lagi relevan — Q15 menghilangkan kebutuhannya* |
+| V-02 | Perilaku write `--add-dir` yang sebenarnya | Phase 4 |
+| V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | Phase 4 |
+| V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | Phase 4 |
+| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | Phase 2 |
+
+---
+
+## Catatan pemeliharaan
+
+Register ini diperbarui pada setiap checkpoint fase. Isu yang ditutup tidak dihapus,
+melainkan ditandai beserta resolusinya, agar keputusan dapat ditinjau ulang bila
+asumsinya berubah.
