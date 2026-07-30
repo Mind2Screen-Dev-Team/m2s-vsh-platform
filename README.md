@@ -19,16 +19,35 @@ schema, template, runner script, dan registry reservasi path.
 | Peran | Repository | Visibility | Default branch |
 |---|---|---|---|
 | Control | `fajarcandraaa/m2s-vsh-platform` | public | `main` |
-| Backend (Go) | `fajarcandraaa/m2s-vsh-project-backend` | public | `master` ⚠️ |
-| Frontend (Next.js) | `fajarcandraaa/m2s-vsh-project-frontend` | public | `master` ⚠️ |
+| Backend (Go) | `fajarcandraaa/m2s-vsh-project-backend` | public | `main` |
+| Frontend (Next.js) | `fajarcandraaa/m2s-vsh-project-frontend` | public | `main` |
 
-⚠️ Default branch kedua repo pilot masih `master`, sedangkan control repo `main`.
-Normalisasi dicatat sebagai **D-01** di `docs/decisions/open-questions.md`.
+Kedua repo pilot memiliki `main`, `develop`, dan `staging`. Normalisasi default branch
+tertutup sebagai **D-01** (29 Juli 2026) — lihat `docs/decisions/open-questions.md`.
 
 Repository dibuat **public** secara sengaja: pada plan GitHub Free, branch protection
-dan rulesets hanya tersedia untuk repository public. Tanpa keduanya, lapisan
-anti-overlap #7 (independent review) dan #8 (merge queue) tidak dapat ditegakkan.
-Lihat `docs/decisions/capability-verification.md`.
+hanya tersedia untuk repository public. Lihat `docs/decisions/capability-verification.md`.
+
+### Branch protection — aktif sebagian
+
+| Aturan | `main` pilot | `develop`/`staging` | `main` control |
+|---|---|---|---|
+| Force-push diblokir | ✅ | ✅ | ✅ |
+| Penghapusan branch diblokir | ✅ | ✅ | ✅ |
+| Wajib lewat pull request | ✅ | ✅ | — |
+| Conversation resolved | ✅ | ✅ | — |
+| Required status checks | ❌ Phase 4 | ❌ Phase 4 | — |
+| 2 required approval | ❌ butuh identitas ke-2 | ❌ butuh identitas ke-2 | — |
+| Pembatasan siapa boleh push | ❌ **org-only** | ❌ **org-only** | ❌ |
+
+Berlaku juga bagi admin (`enforce_admins`). Control repo sengaja tidak mewajibkan PR
+agar dokumen dapat di-commit langsung.
+
+⚠️ **Lapisan anti-overlap #7 dan #8 belum tertegakkan.** Tiga prasyarat ADR-001 belum
+terpenuhi; yang paling mengikat: pembatasan hak push hanya tersedia untuk repository
+milik **organization** — status public tidak mencukupi. Selama itu belum ada, larangan
+"implementer tidak merge PR sendiri" tetap soft rule. Lihat ADR-001 § Status
+penegakan dan **D-03**.
 
 ---
 

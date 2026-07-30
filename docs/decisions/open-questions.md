@@ -32,6 +32,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | A-16 | Distribusi agent per repository | ✅ tertutup — Q10 |
 | D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
+| D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
 | V-01…V-05 | Butuh uji empiris | ⏳ Phase 3–4 |
 
 ---
@@ -239,6 +240,48 @@ lapisan anti-overlap #7 dan #8 tetap tidak tertegakkan.
 Upgrade memerlukan persetujuan owner organization.
 
 **Menunggu keputusan.** Tidak memblokir Phase 0–8 pilot.
+
+---
+
+### D-03 — Pembatasan hak push/merge hanya tersedia untuk repo organization 🔴
+
+**Ditemukan 30 Juli 2026** saat mengeksekusi branch protection.
+
+**Kondisi:** ketiga repo berada di akun personal `fajarcandraaa`. Status public membuka
+branch protection, tetapi **tidak** membuka pembatasan *siapa* yang boleh push atau
+merge. Fitur itu org-only. Terverifikasi:
+
+```
+PUT /repos/fajarcandraaa/m2s-vsh-project-backend/branches/main/protection
+422 Only organization repositories can have users and team restrictions
+```
+
+**Mengoreksi asumsi sebelumnya.** README dan ADR-001 semula menyatakan status public
+sudah cukup untuk menegakkan lapisan anti-overlap #7 dan #8. Itu tidak akurat: public
+adalah syarat perlu, bukan syarat cukup.
+
+**Dampak:** prasyarat ADR-001 #3 dan #4 tidak dapat dipenuhi. Model dua identitas
+`m2s-worker`/`m2s-approver` tetap dapat dibuat, tetapi **hak-nya tidak dapat dibatasi
+di sisi GitHub** — `m2s-worker` tidak dapat dilarang me-merge. Akibatnya keputusan #4
+ADR-001 (tidak ada identitas agent ber-scope admin) juga kehilangan penegakannya.
+Acceptance §66 #9 belum dapat diuji.
+
+**Opsi:**
+
+| Opsi | Biaya | Catatan |
+|---|---|---|
+| Pindahkan repo pilot ke organization (Free) | 0 | perlu diverifikasi apakah restriction tersedia pada org plan Free atau menuntut Team |
+| Pindahkan + upgrade org ke Team | ~$4/seat/bulan | jalur yang pasti; menutup D-02 sekaligus |
+| Tetap di akun personal | 0 | lapisan #7 dan #8 tetap soft rule sepanjang pilot |
+
+**Belum diverifikasi:** apakah org plan **Free** sudah cukup untuk push restriction,
+atau harus Team. Ini menentukan apakah D-03 dapat ditutup tanpa biaya. Perlu diuji
+sebelum keputusan diambil.
+
+**Bertautan dengan D-02** — keduanya bermuara pada status organization. Sebaiknya
+diputuskan bersamaan.
+
+**Menunggu keputusan.** Tidak memblokir Phase 1–3; memblokir aktivasi ADR-001.
 
 ---
 

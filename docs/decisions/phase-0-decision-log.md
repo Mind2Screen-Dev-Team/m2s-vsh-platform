@@ -63,7 +63,11 @@ Nama `tumbuh-*` di dokumen arsitektur hanyalah ilustrasi dan **tidak merujuk
 repository nyata**.
 
 **Status verifikasi (29 Juli 2026):** kedua repo ada, **public**, masih kosong
-(`size: 0`), default branch `master`.
+(`size: 0`), setting `default_branch` bawaan `master` tanpa branch apa pun.
+
+**Diperbarui 30 Juli 2026 (D-01):** keduanya sudah di-seed — `main` sebagai default,
+plus `develop` dan `staging`. Branch protection aktif sebagian; lihat ADR-001
+§ Status penegakan dan **D-03**.
 
 ---
 

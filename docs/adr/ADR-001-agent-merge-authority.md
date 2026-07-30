@@ -51,6 +51,20 @@ Temuan kedua: pada plan GitHub Free, branch protection dan rulesets hanya tersed
 untuk repository **public**. Tanpa keduanya, pembatasan hak merge tidak dapat
 ditegakkan sama sekali.
 
+> **Koreksi 30 Juli 2026.** Temuan kedua di atas benar tetapi **tidak cukup**. Status
+> public membuka branch protection, namun **tidak** membuka pembatasan *siapa* yang
+> boleh push atau merge — fitur itu hanya tersedia untuk repository milik
+> **organization**. Terverifikasi:
+>
+> ```
+> PUT /repos/{owner}/{repo}/branches/main/protection
+> 422 Only organization repositories can have users and team restrictions
+> ```
+>
+> Akibatnya keputusan #4 dan tabel hak pada keputusan #3 **tidak dapat ditegakkan**
+> pada repo akun personal, sekuat apa pun konfigurasi lainnya. Dicatat sebagai
+> **D-03**.
+
 ---
 
 ## Keputusan
@@ -140,6 +154,52 @@ cukup kuat untuk memindahkannya ke agent pada v0.1.0.
 
 **Sampai kelima prasyarat terpenuhi, keputusan ini belum berlaku efektif** dan
 seluruh merge dilakukan manusia.
+
+---
+
+## Status penegakan — per 30 Juli 2026
+
+**ADR ini BELUM berlaku efektif.** Seluruh merge masih dilakukan manusia.
+
+| # | Prasyarat | Status |
+|---|---|---|
+| 1 | Repo public atau org Team | ✅ ketiga repo public |
+| 2 | Protection aktif di `main`/`staging`/`develop` | 🟡 sebagian — lihat bawah |
+| 3 | `main` — agent tidak boleh push/merge | ❌ terhalang **D-03** |
+| 4 | `develop`/`staging` — required checks + 2 approval, `m2s-worker` tidak boleh merge | ❌ ketiganya terhalang |
+| 5 | Dua GitHub App terpasang | ❌ belum dibuat |
+
+### Yang sudah terpasang
+
+Pada `main`, `develop`, `staging` kedua repo pilot: force-push diblokir, penghapusan
+branch diblokir, perubahan wajib lewat pull request, conversation wajib resolved,
+`enforce_admins` aktif. Control repo hanya force-push + penghapusan (tanpa wajib PR).
+
+Terverifikasi empiris — push langsung ke `staging` sebagai pemilik repo ditolak:
+
+```
+remote: error: GH006: Protected branch update failed for refs/heads/staging.
+remote: - Changes must be made through a pull request.
+```
+
+### Tiga penghalang yang tersisa
+
+| Penghalang | Sebab | Syarat lepas |
+|---|---|---|
+| Pembatasan hak push/merge | Fitur **org-only** — public tidak cukup (**D-03**) | Repo pindah ke organization |
+| 2 required approval | Hanya satu kolaborator, dan GitHub melarang self-approval | Identitas GitHub kedua (prasyarat #5) |
+| Required status checks | Belum ada CI workflow | Phase 4 |
+
+Dua yang terakhir **tidak boleh diaktifkan lebih awal**: mewajibkan approval yang tidak
+mungkin diberikan, atau status check yang tidak pernah dilaporkan, akan memblokir
+seluruh merge tanpa jalan keluar.
+
+### Konsekuensi yang harus disadari
+
+Proteksi yang aktif sekarang mencegah **kerusakan riwayat**, bukan **pelanggaran
+kewenangan**. Agent yang membuka PR masih dapat me-merge PR-nya sendiri. Sampai
+prasyarat #3/#4/#5 terpenuhi, lapisan anti-overlap #7 tetap soft rule dan acceptance
+§66 #9 belum dapat diuji.
 
 ---
 
