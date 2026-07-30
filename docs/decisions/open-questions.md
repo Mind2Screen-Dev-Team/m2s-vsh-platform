@@ -33,7 +33,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
-| V-01…V-05 | Butuh uji empiris | ⏳ Phase 3–4 |
+| V-01…V-05 | Butuh uji empiris | ⏳ Phase 2–3 (§58–§59) |
 
 ---
 
@@ -185,8 +185,9 @@ mengatur repo project.
 persis `scripts/<runner>.sh`; write dibatasi `control/**`.
 
 **Sisa yang belum tertutup:** validasi write-effect dari perintah Bash arbitrer.
-Dilacak sebagai **R-07**, ditangani Phase 4 dengan CI changed-path validation
-sebagai jaring kedua.
+Dilacak sebagai **R-07**, ditangani **Phase 3 (§59)** dengan CI changed-path
+validation sebagai jaring kedua, lalu dijadikan required check pada
+**Phase 4 (§60)**.
 
 ---
 
@@ -281,7 +282,8 @@ sebelum keputusan diambil.
 **Bertautan dengan D-02** — keduanya bermuara pada status organization. Sebaiknya
 diputuskan bersamaan.
 
-**Menunggu keputusan.** Tidak memblokir Phase 1–3; memblokir aktivasi ADR-001.
+**Menunggu keputusan.** Tidak memblokir Phase 1–3 (§57–§59); memblokir aktivasi
+ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
 
 ---
 
@@ -290,10 +292,10 @@ diputuskan bersamaan.
 | Kode | Pertanyaan | Dijadwalkan |
 |---|---|---|
 | V-01 | Apakah hook dapat membaca file di luar cwd? | *tidak lagi relevan — Q15 menghilangkan kebutuhannya* |
-| V-02 | Perilaku write `--add-dir` yang sebenarnya | Phase 4 |
-| V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | Phase 4 |
-| V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | Phase 4 |
-| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | Phase 2 |
+| V-02 | Perilaku write `--add-dir` yang sebenarnya | Phase 3 (§59) |
+| V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | Phase 3 (§59) |
+| V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | Phase 3 (§59) |
+| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | Phase 2 (§58) |
 
 ---
 

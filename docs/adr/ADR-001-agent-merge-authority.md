@@ -188,7 +188,7 @@ remote: - Changes must be made through a pull request.
 |---|---|---|
 | Pembatasan hak push/merge | Fitur **org-only** — public tidak cukup (**D-03**) | Repo pindah ke organization |
 | 2 required approval | Hanya satu kolaborator, dan GitHub melarang self-approval | Identitas GitHub kedua (prasyarat #5) |
-| Required status checks | Belum ada CI workflow | Phase 4 |
+| Required status checks | Belum ada CI workflow | Phase 4 (§60) |
 
 Dua yang terakhir **tidak boleh diaktifkan lebih awal**: mewajibkan approval yang tidak
 mungkin diberikan, atau status check yang tidak pernah dilaporkan, akan memblokir

@@ -54,7 +54,7 @@ mereservasi path yang sama dan mengedit basis yang sudah berubah.
 Implementasi naif berbasis kesamaan string akan meloloskan
 `internal/payroll/**` vs `internal/payroll/period/**`.
 
-**Mitigasi:** matriks uji overlap minimal 12 kasus di Phase 2, wajib mencakup
+**Mitigasi:** matriks uji overlap minimal 12 kasus di **Phase 2 (§58)**, wajib mencakup
 parent/child, glob vs exact file, dan case-sensitivity. Acceptance AC-2.3…AC-2.6.
 
 ---
@@ -65,7 +65,8 @@ parent/child, glob vs exact file, dan case-sensitivity. Acceptance AC-2.3…AC-2
 mencatat siapa owner-nya pada task tertentu. Appendix B menuntut "shared files
 diidentifikasi" tanpa menyediakan field-nya.
 
-**Mitigasi:** tambahkan field `shared_file_ownership` pada `task.schema.json` di Phase 1.
+**Mitigasi:** tambahkan field `shared_file_ownership` pada `task.schema.json` di
+**Phase 2 (§58)**, saat schema tersebut dibuat.
 
 ---
 
@@ -235,8 +236,8 @@ Bukan pelanggaran agent, melainkan cacat dekomposisi task.
 sedang mengedit repository aplikasi.
 
 **Mitigasi:** workspace design terpisah secara fisik; MCP write dibatasi
-`design/**`, `prototypes/**`, `artifacts/**`; akses hanya UI/UX. Ditunda ke Phase 9
-sehingga bukan risiko awal.
+`design/**`, `prototypes/**`, `artifacts/**`; akses hanya UI/UX. Ditunda ke
+**Phase 6 (§62 — UI/UX Optional)** sehingga bukan risiko awal.
 
 ---
 

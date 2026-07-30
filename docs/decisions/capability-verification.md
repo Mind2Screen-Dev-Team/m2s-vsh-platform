@@ -245,8 +245,8 @@ Dicatat sebagai **D-02**.
 | jq | 1.7.1-apple | ✅ |
 | gh | 2.96.0 | ✅ auth `fajarcandraaa`, scope `gist, read:org, repo` |
 | Homebrew | 6.0.13 | ✅ |
-| Ponytail | — | ⬜ belum dipasang (Phase 7) |
-| Mneme | — | ⬜ belum dipasang (Phase 7) |
+| Ponytail | — | ⬜ belum dipasang (Phase 5 §61) |
+| Mneme | — | ⬜ belum dipasang (Phase 5 §61) |
 
 `~/.claude/` tidak memiliki `agents/` maupun `CLAUDE.md`. Tidak ada konfigurasi
 global yang berpotensi bertabrakan dengan konfigurasi project.
@@ -255,7 +255,8 @@ global yang berpotensi bertabrakan dengan konfigurasi project.
 
 ## 10. Yang belum diverifikasi
 
-Butuh uji empiris pada Phase 3–4, karena tidak dapat dipastikan dari dokumentasi:
+Butuh uji empiris pada Phase 2–3 (§58–§59), karena tidak dapat dipastikan dari
+dokumentasi:
 
 | # | Pertanyaan |
 |---|---|

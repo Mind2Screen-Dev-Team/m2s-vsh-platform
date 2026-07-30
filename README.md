@@ -36,7 +36,7 @@ hanya tersedia untuk repository public. Lihat `docs/decisions/capability-verific
 | Penghapusan branch diblokir | ✅ | ✅ | ✅ |
 | Wajib lewat pull request | ✅ | ✅ | — |
 | Conversation resolved | ✅ | ✅ | — |
-| Required status checks | ❌ Phase 4 | ❌ Phase 4 | — |
+| Required status checks | ❌ Phase 4 (§60) | ❌ Phase 4 (§60) | — |
 | 2 required approval | ❌ butuh identitas ke-2 | ❌ butuh identitas ke-2 | — |
 | Pembatasan siapa boleh push | ❌ **org-only** | ❌ **org-only** | ❌ |
 
@@ -86,22 +86,34 @@ Rincian lengkap: [`docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`](docs/
 
 ## Status roadmap
 
-| Phase | Isi | Status |
-|---|---|---|
-| 0 | Decision lock & skeleton control repo | 🟡 berjalan |
-| 0.5 | Verifikasi kapabilitas Claude Code | ✅ selesai |
-| 1 | Schema & kosakata contract | ⬜ |
-| 2 | Runner deterministik & reservasi path | ⬜ |
-| 3 | Core agents (TL/SA, Backend, Reviewer) | ⬜ |
-| 4 | Enforcement path & command | ⬜ |
-| 5 | Roster agent lengkap, rules, CLAUDE.md | ⬜ |
-| 6 | GitHub workflow & CI gates | ⬜ |
-| 7 | Tool pilot (Ponytail, Mneme) | ⬜ |
-| 8 | Pilot eksekusi paralel | ⬜ |
-| 9 | Optional & stabilisasi | ⬜ |
+Roadmap mengikuti **§56–§64 dokumen arsitektur**. Tabel ini adalah cerminan, bukan
+sumber — bila berbeda, dokumen arsitektur yang berlaku.
+
+| Phase | Isi | Sumber | Status |
+|---|---|---|---|
+| 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
+| 1 | Core Agents — 9 project agent | §57 | ⬜ |
+| 2 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 | ⬜ |
+| 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ⬜ |
+| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
+| 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
+| 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |
+| 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ⬜ |
+| 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ⬜ |
 
 Setiap batas fase memiliki **checkpoint manusia**. Tidak ada fase yang dimulai
 sebelum checkpoint fase sebelumnya disetujui.
+
+**Verifikasi kapabilitas Claude Code** (hasil: `docs/decisions/capability-verification.md`)
+dikerjakan sebagai bagian Phase 0, memperluas §56 dengan bukti platform sebelum
+agent dibangun. Ia **bukan fase tersendiri**.
+
+> **Aturan perubahan roadmap.** Penomoran dan isi fase hanya boleh menyimpang dari
+> §56–§64 melalui **ADR** yang menyatakan bagian mana yang ditimpa, sesuai §70.
+> Perubahan langsung pada tabel ini tanpa ADR adalah cacat dokumentasi.
+>
+> Saat merujuk fase di dokumen lain, tulis nomor § berdampingan — `Phase 5 (§61)` —
+> agar rujukan tetap sahih bila penomoran bergeser.
 
 ---
 
@@ -110,7 +122,7 @@ sebelum checkpoint fase sebelumnya disetujui.
 | Dokumen | Isi |
 |---|---|
 | [`docs/decisions/phase-0-decision-log.md`](docs/decisions/phase-0-decision-log.md) | Jawaban final Q1–Q20 |
-| [`docs/decisions/open-questions.md`](docs/decisions/open-questions.md) | Status A-01…A-16, D-01 |
+| [`docs/decisions/open-questions.md`](docs/decisions/open-questions.md) | Status A-01…A-16, D-01…D-03, V-01…V-05 |
 | [`docs/decisions/component-inventory.md`](docs/decisions/component-inventory.md) | 62 komponen + klasifikasi kepemilikan |
 | [`docs/decisions/risk-register.md`](docs/decisions/risk-register.md) | R-01…R-27 |
 | [`docs/decisions/capability-verification.md`](docs/decisions/capability-verification.md) | Bukti kapabilitas platform |

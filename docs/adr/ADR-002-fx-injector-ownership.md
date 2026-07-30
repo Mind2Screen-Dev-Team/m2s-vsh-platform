@@ -149,7 +149,7 @@ Biayanya adalah satu task tambahan per gelombang, bukan per task domain.
 - Konvensi `internal/<domain>/fx.go` harus ditegakkan sejak file pertama;
   bila terlewat, hazard-nya kembali
 
-### Yang harus divalidasi di Phase 8
+### Yang harus divalidasi di Phase 8 (§64)
 
 Acceptance §67 diperluas dengan pemeriksaan tambahan:
 
