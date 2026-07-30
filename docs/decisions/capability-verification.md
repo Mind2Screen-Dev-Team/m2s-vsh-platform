@@ -255,7 +255,7 @@ global yang berpotensi bertabrakan dengan konfigurasi project.
 
 ## 10. Yang belum diverifikasi
 
-Butuh uji empiris pada Phase 2–3 (§58–§59), karena tidak dapat dipastikan dari
+Butuh uji empiris pada Phase 1 dan 3 (§58, §59), karena tidak dapat dipastikan dari
 dokumentasi:
 
 | # | Pertanyaan |

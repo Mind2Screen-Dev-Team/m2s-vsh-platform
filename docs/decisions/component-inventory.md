@@ -145,7 +145,7 @@ stop conditions.
 (berubah per task — milik task contract).
 
 **Catatan:** `effort` belum ditetapkan Appendix A dokumen arsitektur. Perlu
-ditentukan per role saat **Phase 1 (§57 — Core Agents)** karena berpengaruh pada
+ditentukan per role saat **Phase 2 (§57 — Core Agents)** karena berpengaruh pada
 pengukuran biaya token di **Phase 8 (§64)**.
 
 ---

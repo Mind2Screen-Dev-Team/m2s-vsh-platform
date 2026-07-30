@@ -33,7 +33,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
-| V-01…V-05 | Butuh uji empiris | ⏳ Phase 2–3 (§58–§59) |
+| V-01…V-05 | Butuh uji empiris | ⏳ Phase 1 dan 3 (§58, §59) |
 
 ---
 
@@ -282,8 +282,8 @@ sebelum keputusan diambil.
 **Bertautan dengan D-02** — keduanya bermuara pada status organization. Sebaiknya
 diputuskan bersamaan.
 
-**Menunggu keputusan.** Tidak memblokir Phase 1–3 (§57–§59); memblokir aktivasi
-ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
+**Menunggu keputusan.** Tidak memblokir Phase 1–3 (§58, §57, §59); memblokir
+aktivasi ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
 
 ---
 
@@ -295,7 +295,7 @@ ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
 | V-02 | Perilaku write `--add-dir` yang sebenarnya | Phase 3 (§59) |
 | V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | Phase 3 (§59) |
 | V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | Phase 3 (§59) |
-| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | Phase 2 (§58) |
+| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | Phase 1 (§58) |
 
 ---
 

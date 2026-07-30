@@ -87,19 +87,25 @@ Rincian lengkap: [`docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`](docs/
 ## Status roadmap
 
 Roadmap mengikuti **§56–§64 dokumen arsitektur**. Tabel ini adalah cerminan, bukan
-sumber — bila berbeda, dokumen arsitektur yang berlaku.
+sumber — bila berbeda, dokumen arsitektur yang berlaku, kecuali pada bagian yang
+ditimpa ADR.
 
 | Phase | Isi | Sumber | Status |
 |---|---|---|---|
 | 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
-| 1 | Core Agents — 9 project agent | §57 | ⬜ |
-| 2 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 | ⬜ |
+| 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ⬜ |
+| 2 | Core Agents — 9 project agent | §57 ⇄ | ⬜ |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ⬜ |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
 | 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |
 | 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ⬜ |
 | 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ⬜ |
+
+⇄ **Phase 1 dan 2 ditukar** oleh [ADR-003](docs/adr/ADR-003-phase-order-contract-before-agents.md):
+task contract dikerjakan sebelum core agents, karena definisi agent memuat batas path
+yang bentuknya ditetapkan `task.schema.json`. Isi dan kriteria Done kedua fase tidak
+berubah — hanya urutannya. Akibatnya nomor fase tidak lagi sejajar dengan nomor §.
 
 Setiap batas fase memiliki **checkpoint manusia**. Tidak ada fase yang dimulai
 sebelum checkpoint fase sebelumnya disetujui.
@@ -128,6 +134,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/decisions/capability-verification.md`](docs/decisions/capability-verification.md) | Bukti kapabilitas platform |
 | [`docs/adr/ADR-001-agent-merge-authority.md`](docs/adr/ADR-001-agent-merge-authority.md) | Kewenangan merge agent |
 | [`docs/adr/ADR-002-fx-injector-ownership.md`](docs/adr/ADR-002-fx-injector-ownership.md) | Kepemilikan DI injector |
+| [`docs/adr/ADR-003-phase-order-contract-before-agents.md`](docs/adr/ADR-003-phase-order-contract-before-agents.md) | Pertukaran urutan Phase 1 dan 2 |
 
 ---
 
