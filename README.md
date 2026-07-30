@@ -94,7 +94,7 @@ ditimpa ADR.
 |---|---|---|---|
 | 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
 | 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ⬜ |
-| 2 | Core Agents — 9 project agent | §57 ⇄ | ⬜ |
+| 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ⬜ |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ⬜ |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
 | 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
@@ -128,7 +128,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | Dokumen | Isi |
 |---|---|
 | [`docs/decisions/phase-0-decision-log.md`](docs/decisions/phase-0-decision-log.md) | Jawaban final Q1–Q20 |
-| [`docs/decisions/open-questions.md`](docs/decisions/open-questions.md) | Status A-01…A-16, D-01…D-04, V-01…V-05, dan daftar bagian arsitektur yang ditimpa ADR |
+| [`docs/decisions/open-questions.md`](docs/decisions/open-questions.md) | Status A-01…A-16, D-01…D-05, V-01…V-05, dan daftar bagian arsitektur yang ditimpa ADR |
 | [`docs/decisions/component-inventory.md`](docs/decisions/component-inventory.md) | 62 komponen + klasifikasi kepemilikan |
 | [`docs/decisions/risk-register.md`](docs/decisions/risk-register.md) | R-01…R-27 |
 | [`docs/decisions/path-overlap-matrix.md`](docs/decisions/path-overlap-matrix.md) | Semantik glob & 24 kasus uji konflik reservasi (R-03) |
@@ -137,6 +137,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/adr/ADR-002-fx-injector-ownership.md`](docs/adr/ADR-002-fx-injector-ownership.md) | Kepemilikan DI injector |
 | [`docs/adr/ADR-003-phase-order-contract-before-agents.md`](docs/adr/ADR-003-phase-order-contract-before-agents.md) | Pertukaran urutan Phase 1 dan 2 |
 | [`docs/adr/ADR-004-contract-format-and-runner-implementation.md`](docs/adr/ADR-004-contract-format-and-runner-implementation.md) | Format kontrak & bahasa runner |
+| [`docs/adr/ADR-005-additional-engineering-roles.md`](docs/adr/ADR-005-additional-engineering-roles.md) | Empat role engineering tambahan |
 
 ---
 

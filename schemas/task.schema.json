@@ -27,6 +27,8 @@
           "enum": [
             "backend-implementation",
             "frontend-implementation",
+            "fullstack-implementation",
+            "mobile-implementation",
             "integration",
             "bugfix",
             "refactor",

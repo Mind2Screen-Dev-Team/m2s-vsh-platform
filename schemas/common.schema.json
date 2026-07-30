@@ -18,7 +18,7 @@
     },
 
     "role": {
-      "description": "Sembilan role agent pada §17-§25. Nama ini juga menjadi nama file pada .claude/agents/<role>.md (§37).",
+      "description": "Tiga belas role agent. Sembilan pertama berasal dari §17-§25; empat terakhir ditambahkan ADR-005 untuk struktur project di luar backend+frontend. Nama ini juga menjadi nama file pada .claude/agents/<role>.md (§37), karena itu selalu kebab-case huruf kecil.",
       "type": "string",
       "enum": [
         "project-manager",
@@ -29,12 +29,16 @@
         "qa-engineer",
         "code-reviewer",
         "devops-release",
-        "technical-writer"
+        "technical-writer",
+        "fullstack-engineer",
+        "mobile-engineer",
+        "android-developer",
+        "ios-developer"
       ]
     },
 
     "writerRole": {
-      "description": "Subset role yang boleh memegang reservasi path. Read-only agent tidak memerlukan reservasi (§30). Code Reviewer dikecualikan karena plan mode tanpa writable path (A-03).",
+      "description": "Subset role yang boleh memegang reservasi path. Read-only agent tidak memerlukan reservasi (§30). Code Reviewer dikecualikan karena plan mode tanpa writable path (A-03). Project Manager dikecualikan karena write-nya terbatas control/** (Q11), bukan repo aplikasi.",
       "type": "string",
       "enum": [
         "technical-lead-system-analyst",
@@ -43,7 +47,11 @@
         "frontend-engineer",
         "qa-engineer",
         "devops-release",
-        "technical-writer"
+        "technical-writer",
+        "fullstack-engineer",
+        "mobile-engineer",
+        "android-developer",
+        "ios-developer"
       ]
     },
 

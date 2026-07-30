@@ -269,6 +269,7 @@
         "properties": {
           "status": { "const": "implementation-complete" },
           "role": {
+            "$comment": "Daftar ini sengaja mengulang writerRole, bukan mem-$ref, agar code-reviewer terkecuali secara eksplisit. Setiap penambahan writerRole wajib ditambahkan di sini juga — ditegakkan TestWriterRolesMustReportChanges.",
             "enum": [
               "backend-engineer",
               "frontend-engineer",
@@ -276,7 +277,11 @@
               "devops-release",
               "technical-writer",
               "technical-lead-system-analyst",
-              "ui-ux-designer"
+              "ui-ux-designer",
+              "fullstack-engineer",
+              "mobile-engineer",
+              "android-developer",
+              "ios-developer"
             ]
           }
         },

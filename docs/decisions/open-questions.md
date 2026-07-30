@@ -2,7 +2,7 @@
 
 **Tanggal:** 29 Juli 2026
 **Sumber:** analisis `docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`
-**Status:** 12 tertutup, 4 tertutup sebagian, 2 terbuka, 5 menunggu uji empiris
+**Status:** 12 tertutup, 4 tertutup sebagian, 3 terbuka, 1 menunggu konfirmasi, 5 menunggu uji empiris
 
 Register ini melacak setiap bagian dokumen arsitektur yang ambigu, kontradiktif,
 atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitektur,
@@ -34,6 +34,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
 | D-04 | Skala severity ditetapkan schema, bukan arsitektur | 🟡 menunggu konfirmasi |
+| D-05 | Field `project` belum dipakai runner (multi-project) | 🔴 **terbuka** |
 | V-01…V-05 | Butuh uji empiris | ⏳ Phase 1 dan 3 (§58, §59) |
 
 ---
@@ -319,6 +320,44 @@ yang sudah tersimpan perlu dipetakan ulang.
 
 ---
 
+### D-05 — Field `project` belum dipakai runner 🔴
+
+**Ditemukan 30 Juli 2026** saat memeriksa portabilitas sistem ke project lain.
+
+**Kondisi:** `task.schema.json` memiliki field `task.project` (§34 mencontohkan
+`project: tumbuh`) dan §36 mendaftar direktori `control/projects/`. Namun runner
+**tidak pernah membacanya**:
+
+| Tempat | Perilaku sekarang | Akibat bila satu control repo melayani banyak project |
+|---|---|---|
+| Nama berkas reservasi | `<task-id>.yaml` | dua project dengan `BE-101` menulis ke berkas yang sama |
+| Pencocokan konflik | `res.Repository() == repository` | dua project yang masing-masing punya repo bernama `backend` dianggap bertabrakan |
+| `reservation.schema.json` | tidak punya field `project`, `additionalProperties: false` | tidak dapat ditambahkan tanpa mengubah schema |
+
+**Dua model yang mungkin:**
+
+| Model | Isi | Status |
+|---|---|---|
+| A | satu control repo per project — clone lalu ganti isinya | ✅ bekerja hari ini |
+| B | satu control repo, banyak project (disiratkan `control/projects/`) | ❌ butuh perbaikan di atas |
+
+Dokumen arsitektur tidak memilih secara tegas: §56 menyebut "satu pilot project",
+sementara §36 menyediakan `control/projects/` yang jamak.
+
+**Yang tidak menjadi kendala:** jumlah dan susunan repository per project.
+`repository` adalah string bebas, bukan enum. Bentuk backend+frontend, fullstack
+repo tunggal, maupun backend+frontend+mobile seluruhnya dapat dinyatakan —
+role-nya ditambahkan ADR-005.
+
+**Biaya menunda:** menambah kunci reservasi setelah ada riwayat reservasi nyata
+jauh lebih mahal daripada sekarang, karena menuntut migrasi berkas dan penulisan
+ulang pencocokan konflik.
+
+**Dikerjakan saat menyentuh registry atau `control/projects/`**, sesuai arahan
+pemilik arsitektur. Tidak memblokir sisa Phase 1.
+
+---
+
 ## Bagian dokumen arsitektur yang ditimpa ADR
 
 Daftar ini mencegah teks lama terbaca sebagai masih berlaku. Bila bekerja pada
@@ -328,6 +367,7 @@ bagian di bawah, baca ADR-nya lebih dulu.
 |---|---|---|
 | §17.6, §18.5 | ADR-001 | PM & TL/SA boleh approve/merge ke non-`main` — **belum berlaku efektif**, lihat D-03 |
 | §57, §58 | ADR-003 | Urutan Phase 1 dan 2 ditukar |
+| §57, §17–§25 | ADR-005 | Role bertambah 9 → 13; Phase 2 menghasilkan 13 definisi agent |
 | §30 | ADR-004 (Q8) | Lokasi worktree: `$HOME/.m2s/worktrees/<repository>/<task-id>`, bukan `.claude/worktrees/` |
 | §30 | ADR-004 (Q12) | Reservasi dilepas saat **merge**, bukan saat PR dibuat; status antara `reserved-pending-merge` |
 | §34 | ADR-004 (R-04) | Ditambah field `shared_file_ownership` |
