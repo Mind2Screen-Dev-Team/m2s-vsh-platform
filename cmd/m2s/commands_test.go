@@ -84,11 +84,13 @@ func writeTask(t *testing.T, dir string, o taskOpts) string {
 	b.WriteString("execution:\n  isolation: worktree\n  max_turns: 30\n  timeout_minutes: 45\n")
 	b.WriteString("paths:\n  allowed:\n")
 	for _, p := range o.allowed {
-		b.WriteString("    - " + p + "\n")
+		// Path dikutip: nilai yang diawali '*' adalah alias YAML dan akan
+		// gagal di-parse. Pola seperti "**" karena itu wajib berkutip.
+		b.WriteString("    - \"" + p + "\"\n")
 	}
-	b.WriteString("  forbidden:\n    - .claude/**\n    - .task/**\n")
+	b.WriteString("  forbidden:\n    - \"go.mod\"\n    - \".claude/**\"\n    - \".task/**\"\n")
 	if o.shared != "" {
-		b.WriteString("shared_file_ownership:\n  - path: " + o.shared + "\n")
+		b.WriteString("shared_file_ownership:\n  - path: \"" + o.shared + "\"\n")
 		b.WriteString("    owner_task_id: " + o.id + "\n    owner_role: " + o.role + "\n")
 	}
 	b.WriteString("acceptance_criteria:\n  - uji\nquality_gates:\n  - make test\n")

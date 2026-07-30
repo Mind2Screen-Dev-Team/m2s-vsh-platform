@@ -269,6 +269,17 @@ func cmdLaunchTask(args []string) int {
 	}
 	fmt.Printf("ok  contract dimaterialisasi: %s\n", dest)
 
+	// Snapshot berada di dalam worktree, sehingga `git add -A` milik agent
+	// akan ikut men-stage-nya. Itu bertentangan dengan .task/** yang justru
+	// ada pada forbidden_paths.
+	//
+	// Pengabaian ditulis ke .git/info/exclude, bukan .gitignore: berkas itu
+	// milik worktree dan tidak pernah ter-commit, sehingga repo aplikasi tidak
+	// perlu mengetahui detail runner.
+	if err := excludeTaskDir(worktree); err != nil {
+		return fail(exitError, "%v", err)
+	}
+
 	if *dryRun {
 		fmt.Printf("ok  dry-run — sesi agent tidak dijalankan\n")
 		return exitOK
@@ -390,6 +401,49 @@ func cmdReleaseReservation(args []string) int {
 	}
 	fmt.Printf("ok  reservasi %s → %s oleh %s\n", *taskID, target, *by)
 	return exitOK
+}
+
+// excludeTaskDir memastikan .task/ tidak pernah masuk staging area agent.
+//
+// Ditulis ke .git/info/exclude milik worktree — bukan .gitignore — karena
+// berkas itu tidak ter-commit, sehingga repository aplikasi tidak perlu memuat
+// detail runner. Idempotent: pemanggilan berulang tidak menduplikasi entri.
+//
+// Pada worktree, .git adalah BERKAS berisi "gitdir: <path>", bukan direktori;
+// lokasi info/exclude karena itu ditanyakan kepada git.
+func excludeTaskDir(worktree string) error {
+	out, err := exec.Command("git", "-C", worktree, "rev-parse", "--git-path", "info/exclude").Output()
+	if err != nil {
+		return fmt.Errorf("menentukan lokasi info/exclude: %w", err)
+	}
+	excludePath := strings.TrimSpace(string(out))
+	if !filepath.IsAbs(excludePath) {
+		excludePath = filepath.Join(worktree, excludePath)
+	}
+
+	const entry = ".task/"
+	if b, err := os.ReadFile(excludePath); err == nil {
+		for _, line := range strings.Split(string(b), "\n") {
+			if strings.TrimSpace(line) == entry {
+				return nil // sudah ada
+			}
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("membaca %s: %w", excludePath, err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(excludePath), 0o755); err != nil {
+		return fmt.Errorf("membuat direktori %s: %w", filepath.Dir(excludePath), err)
+	}
+	f, err := os.OpenFile(excludePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return fmt.Errorf("membuka %s: %w", excludePath, err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString("\n# snapshot task contract milik runner (Q15)\n" + entry + "\n"); err != nil {
+		return fmt.Errorf("menulis %s: %w", excludePath, err)
+	}
+	return nil
 }
 
 func toAny(ss []string) []any {
