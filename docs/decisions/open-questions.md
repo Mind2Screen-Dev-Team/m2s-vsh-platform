@@ -287,6 +287,23 @@ aktivasi ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
 
 ---
 
+## Bagian dokumen arsitektur yang ditimpa ADR
+
+Daftar ini mencegah teks lama terbaca sebagai masih berlaku. Bila bekerja pada
+bagian di bawah, baca ADR-nya lebih dulu.
+
+| Bagian | Ditimpa oleh | Isi yang berubah |
+|---|---|---|
+| §17.6, §18.5 | ADR-001 | PM & TL/SA boleh approve/merge ke non-`main` — **belum berlaku efektif**, lihat D-03 |
+| §57, §58 | ADR-003 | Urutan Phase 1 dan 2 ditukar |
+| §30 | ADR-004 (Q8) | Lokasi worktree: `$HOME/.m2s/worktrees/<repository>/<task-id>`, bukan `.claude/worktrees/` |
+| §30 | ADR-004 (Q12) | Reservasi dilepas saat **merge**, bukan saat PR dibuat; status antara `reserved-pending-merge` |
+| §34 | ADR-004 (R-04) | Ditambah field `shared_file_ownership` |
+| §30, §34 | ADR-004 | Contoh YAML di kedua bagian bersifat **ilustratif**; definisi normatif ada pada `schemas/*.schema.json` |
+| §20.6 | Q4 | Path `tests/unit/**` tidak berlaku untuk repo Go — unit test colocated `_test.go` |
+
+---
+
 ## Menunggu uji empiris
 
 | Kode | Pertanyaan | Dijadwalkan |

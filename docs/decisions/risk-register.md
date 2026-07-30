@@ -57,6 +57,10 @@ Implementasi naif berbasis kesamaan string akan meloloskan
 **Mitigasi:** matriks uji overlap minimal 12 kasus di **Phase 1 (§58)**, wajib mencakup
 parent/child, glob vs exact file, dan case-sensitivity. Acceptance AC-2.3…AC-2.6.
 
+**Jalur penutupan (ADR-004):** deteksi overlap diimplementasikan dalam Go, sehingga
+matriks tersebut berbentuk table-driven test yang dijalankan CI — bukan pemeriksaan
+manual. Ini alasan utama pemilihan Go di atas Bash.
+
 ---
 
 ### R-04 🟡 Shared file tanpa owner yang ditunjuk
@@ -66,7 +70,8 @@ mencatat siapa owner-nya pada task tertentu. Appendix B menuntut "shared files
 diidentifikasi" tanpa menyediakan field-nya.
 
 **Mitigasi:** tambahkan field `shared_file_ownership` pada `task.schema.json` di
-**Phase 1 (§58)**, saat schema tersebut dibuat.
+**Phase 1 (§58)**, saat schema tersebut dibuat. Ditegaskan ADR-004 keputusan #3:
+schema adalah definisi normatif, contoh §34 hanya ilustrasi.
 
 ---
 
