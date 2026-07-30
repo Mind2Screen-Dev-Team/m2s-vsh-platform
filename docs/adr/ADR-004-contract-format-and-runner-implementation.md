@@ -248,10 +248,19 @@ path terlarang) dan A-05 (celah reservasi antara PR dan merge). Mengembalikan te
 | Pertanyaan | Kapan |
 |---|---|
 | Apakah CI memverifikasi wrapper `.sh` benar-benar tipis? | Phase 4 (§60) |
-| Apakah CI menjalankan pemeriksaan kompatibilitas RE2 atas pola schema? | Phase 4 (§60) |
 | Apakah CI memverifikasi binary hasil build ulang identik dengan yang dipakai? | Phase 4 (§60) |
 
 Pertanyaan `bin/m2s` di-commit atau tidak **sudah dijawab** oleh keputusan #5.
+
+Pemeriksaan kompatibilitas RE2 **sudah terjawab lebih awal**: ia menjadi test
+`TestSchemaPatternsAreRE2Compatible` pada `internal/contract/re2_test.go`, bukan
+menunggu CI. Terverifikasi bahwa validator Go **menolak pola lookahead saat
+kompilasi schema**, sehingga pelanggaran membuat `cmd/m2s` gagal start — bukan gagal
+diam-diam:
+
+```
+'^(?!/).+$' is not valid regex: invalid or unsupported Perl syntax: `(?!`
+```
 
 ---
 
