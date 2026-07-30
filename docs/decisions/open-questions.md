@@ -33,6 +33,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
+| D-04 | Skala severity ditetapkan schema, bukan arsitektur | 🟡 menunggu konfirmasi |
 | V-01…V-05 | Butuh uji empiris | ⏳ Phase 1 dan 3 (§58, §59) |
 
 ---
@@ -284,6 +285,37 @@ diputuskan bersamaan.
 
 **Menunggu keputusan.** Tidak memblokir Phase 1–3 (§58, §57, §59); memblokir
 aktivasi ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
+
+---
+
+### D-04 — Skala severity ditetapkan schema, bukan dokumen arsitektur 🟡
+
+**Ditemukan 30 Juli 2026** saat menulis `handoff.schema.json`.
+
+**Kondisi:** §22.8 menuntut *"defects mempunyai severity"* dan §23.7 menuntut
+*"setiap finding memiliki severity"*, tetapi dokumen arsitektur **tidak pernah
+mendefinisikan nilai severity**. Pemindaian menemukan beberapa skala terpakai
+bercampur: `high/medium/low`, `critical/major/minor/trivial`, dan `blocker`.
+
+**Yang ditetapkan schema:**
+
+```
+blocker  → menghalangi merge
+major    → wajib ditangani, tidak menghalangi merge
+minor    → sebaiknya ditangani
+nit      → preferensi, boleh diabaikan
+```
+
+**Alasan pemilihan:** `blocker` sudah dipakai dokumen dan memetakan langsung ke
+`request-changes` (§23.7). `critical` dihindari karena tumpang tindih makna dengan
+`blocker` tanpa menambah daya pisah. Empat tingkat cukup untuk memutuskan
+merge/tidak-merge plus dua tingkat catatan.
+
+**Status:** keputusan schema, **bukan** kutipan arsitektur. Bila pemilik arsitektur
+menghendaki skala lain, `handoff.schema.json` perlu version bump dan seluruh handoff
+yang sudah tersimpan perlu dipetakan ulang.
+
+**Menunggu konfirmasi pemilik arsitektur.** Tidak memblokir Phase 1.
 
 ---
 
