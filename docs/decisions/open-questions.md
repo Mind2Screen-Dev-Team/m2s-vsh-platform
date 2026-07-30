@@ -2,7 +2,7 @@
 
 **Tanggal:** 29 Juli 2026
 **Sumber:** analisis `docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`
-**Status:** 12 tertutup, 4 tertutup sebagian, 3 terbuka, 1 menunggu konfirmasi, 5 menunggu uji empiris
+**Status:** 13 tertutup, 4 tertutup sebagian, 2 terbuka, 1 menunggu konfirmasi, 5 menunggu uji empiris
 
 Register ini melacak setiap bagian dokumen arsitektur yang ambigu, kontradiktif,
 atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitektur,
@@ -34,7 +34,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
 | D-04 | Skala severity ditetapkan schema, bukan arsitektur | 🟡 menunggu konfirmasi |
-| D-05 | Field `project` belum dipakai runner (multi-project) | 🔴 **terbuka** |
+| D-05 | Field `project` belum dipakai runner (multi-project) | ✅ diputuskan — model A untuk v0.1.0, model B ke v0.2.0 |
 | V-01…V-05 | Butuh uji empiris | ⏳ Phase 1 dan 3 (§58, §59) |
 
 ---
@@ -320,7 +320,7 @@ yang sudah tersimpan perlu dipetakan ulang.
 
 ---
 
-### D-05 — Field `project` belum dipakai runner 🔴
+### D-05 — Field `project` belum dipakai runner ✅
 
 **Ditemukan 30 Juli 2026** saat memeriksa portabilitas sistem ke project lain.
 
@@ -338,11 +338,34 @@ yang sudah tersimpan perlu dipetakan ulang.
 
 | Model | Isi | Status |
 |---|---|---|
-| A | satu control repo per project — clone lalu ganti isinya | ✅ bekerja hari ini |
-| B | satu control repo, banyak project (disiratkan `control/projects/`) | ❌ butuh perbaikan di atas |
+| A | satu control repo per project — clone lalu ganti isinya | ✅ **dipilih untuk v0.1.0** |
+| B | satu control repo, banyak project (disiratkan `control/projects/`) | ⏳ ditunda ke **v0.2.0** |
 
 Dokumen arsitektur tidak memilih secara tegas: §56 menyebut "satu pilot project",
 sementara §36 menyediakan `control/projects/` yang jamak.
+
+### Keputusan 30 Juli 2026 — model A untuk v0.1.0
+
+**Model A dipakai sepanjang pilot.** Ia bekerja tanpa perubahan apa pun: clone
+control repo, ganti isi `control/`, arahkan `M2S_CONTROL_ROOT`. Setiap project
+memiliki registry sendiri sehingga isolasinya mutlak.
+
+**Model B ditunda ke v0.2.0.** Ini sejalan dengan §65, yang sudah mencantumkan
+*"multi-project coordination menjadi bottleneck"* sebagai pemicu kenaikan versi.
+Model B karena itu bukan pekerjaan yang terlupakan, melainkan lingkup versi
+berikutnya.
+
+**Biaya yang diterima pada model A:** `schemas/`, `cmd/m2s`, dan `scripts/`
+terduplikasi di setiap clone. Perbaikan bug harus disalin ke seluruh project — dan
+ini menyentuh komponen penegak batas, tempat penyimpangan versi paling berbahaya.
+Bila jumlah project bertambah sampai penyalinan itu menjadi sumber kesalahan,
+pemicu §65 terpenuhi dan model B dikerjakan.
+
+**Yang membuat penundaan ini murah:** beralih A → B tetap ringan selama registry
+masih kosong saat project baru dimulai. Yang mahal adalah menambah kunci `project`
+setelah ada riwayat reservasi nyata, karena menuntut penamaan ulang berkas dan
+pemindahan worktree. Empat titik pada tabel di atas adalah daftar kerja yang siap
+dipakai saat v0.2.0 dibuka.
 
 **Yang tidak menjadi kendala:** jumlah dan susunan repository per project.
 `repository` adalah string bebas, bukan enum. Bentuk backend+frontend, fullstack
@@ -353,8 +376,8 @@ role-nya ditambahkan ADR-005.
 jauh lebih mahal daripada sekarang, karena menuntut migrasi berkas dan penulisan
 ulang pencocokan konflik.
 
-**Dikerjakan saat menyentuh registry atau `control/projects/`**, sesuai arahan
-pemilik arsitektur. Tidak memblokir sisa Phase 1.
+**Tertutup sebagai keputusan sadar**, bukan dibiarkan menggantung: model A dipakai
+v0.1.0, model B menjadi lingkup v0.2.0 sesuai pemicu §65. Tidak memblokir Phase 1.
 
 ---
 
