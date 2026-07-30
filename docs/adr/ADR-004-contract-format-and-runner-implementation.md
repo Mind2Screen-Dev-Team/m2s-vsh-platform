@@ -131,6 +131,31 @@ pada mesin operator (go1.26.4). Tidak ada dependency runtime baru; binary
 terkompilasi menghilangkan ketergantungan pada versi `bash`, `jq`, dan `grep` yang
 berbeda antar mesin.
 
+### Batasan yang ditimbulkan pilihan Go: regex RE2
+
+Go memakai RE2, yang **tidak mendukung lookahead maupun lookbehind**. Terverifikasi:
+
+```
+regexp.Compile(`^(?!/)...`)
+  → error parsing regexp: invalid or unsupported Perl syntax: `(?!`
+```
+
+JSON Schema sendiri mengacu ECMA-262 yang mendukung lookahead, sehingga schema dapat
+lolos pada validator JavaScript tetapi gagal dikompilasi validator Go.
+
+**Konsekuensi mengikat:** seluruh `pattern` pada `schemas/*.schema.json` wajib
+kompatibel RE2. Batasan negatif ditulis sebagai `not` + pola sederhana, bukan
+lookahead:
+
+```json
+"allOf": [
+  { "not": { "pattern": "^/" } },
+  { "not": { "pattern": "(^|/)\\.\\.(/|$)" } }
+]
+```
+
+Pemeriksaan kompatibilitas RE2 atas seluruh pola schema menjadi bagian test suite.
+
 ### Mengapa wrapper `.sh` tetap ada
 
 Q11 mengunci `Bash` PM ke pola `scripts/<runner>.sh`. Mengganti pola itu berarti
@@ -179,6 +204,7 @@ path terlarang) dan A-05 (celah reservasi antara PR dan merge). Mengembalikan te
 |---|---|
 | `bin/m2s` di-commit, di-build lokal, atau dirilis sebagai artefak? | sebelum script pertama ditulis |
 | Apakah CI memverifikasi wrapper `.sh` benar-benar tipis? | Phase 4 (§60) |
+| Apakah CI menjalankan pemeriksaan kompatibilitas RE2 atas pola schema? | Phase 4 (§60) |
 
 ---
 
