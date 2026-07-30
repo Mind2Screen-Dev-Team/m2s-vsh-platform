@@ -63,8 +63,20 @@ docs/
   system-analysis/  analisis sistem per requirement (owner: TL/SA)
 schemas/            JSON Schema untuk task, handoff, reservation, dll.
 templates/          template task contract, handoff, ADR, PR, review report
-scripts/            deterministic task runner (bukan agent — tidak mengambil keputusan teknis)
+scripts/            wrapper tipis ke bin/m2s — pola scripts/<runner>.sh (Q11)
+cmd/m2s/            source runner: 5 subcommand (human-only write)
+internal/           pathmatch (deteksi overlap R-03), contract, registry
+Makefile            build & quality gate (human-only write)
 tests/              uji schema, uji overlap path, uji negatif enforcement
+```
+
+Binary `bin/m2s` **dibangun lokal dan tidak di-commit** (ADR-004 #5). Jalankan
+`make build` lebih dulu; wrapper akan menolak dengan pesan jelas bila belum ada.
+
+```bash
+make build     # kompilasi bin/m2s
+make check     # fmt + vet + test -race
+make verify    # check + wrapper tipis + schema RE2
 ```
 
 ---
