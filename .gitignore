@@ -33,5 +33,10 @@ control/reservations/*.lock
 tmp/
 .cache/
 
+# ── Binary runner: dibangun lokal, tidak di-commit (ADR-004 #5) ────────
+# Source ada di cmd/m2s/**. Bangun dengan `make build`.
+# Binary tidak dapat direview di PR dan terikat platform build-nya.
+bin/
+
 # ── Claude Code lokal (personal, tidak mengubah project behaviour) ────
 .claude/settings.local.json

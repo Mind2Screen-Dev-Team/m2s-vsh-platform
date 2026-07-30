@@ -98,6 +98,20 @@ surface.** Sesuai `component-inventory.md` § Schemas: perubahan schema membutuh
 version bump. `task.schema.json` dimulai pada `1.0`, mengikuti `schema_version: 1.0`
 pada §34.
 
+**5. `bin/m2s` dibangun lokal dan tidak di-commit.** Source berada di `cmd/m2s/**`;
+`bin/` masuk `.gitignore`. Wrapper `.sh` hanya `exec` binary dan gagal dengan pesan
+jelas bila binary belum ada — tidak ada logika build di dalam wrapper.
+
+Artefak rilis per-platform ditambahkan pada Phase 4 (§60) sebagai pelengkap, bukan
+pengganti, setelah CI tersedia.
+
+| Aspek | Ketetapan |
+|---|---|
+| Source | `cmd/m2s/**` — masuk daftar human-only write |
+| Binary | `bin/m2s` — gitignored, dibangun `make build` |
+| Prasyarat mesin | Go terpasang (terverifikasi: go1.26.4 pada mesin operator) |
+| Wrapper | `scripts/*.sh` — `exec bin/m2s <subcommand>`, tanpa logika |
+
 ---
 
 ## Rasional
@@ -156,7 +170,36 @@ lookahead:
 
 Pemeriksaan kompatibilitas RE2 atas seluruh pola schema menjadi bagian test suite.
 
-### Mengapa wrapper `.sh` tetap ada
+### Mengapa binary tidak di-commit
+
+Tiga alasan, urut dari yang paling mengikat:
+
+**Binary tidak dapat direview.** Repo ini public dan `bin/m2s` adalah penegak batas
+path serta satu-satunya otoritas atas registry reservasi. Pada pull request, blob
+biner tampil sebagai `Binary files differ`. Komponen enforcement paling sensitif
+justru menjadi satu-satunya perubahan yang tidak dapat diperiksa manusia — bertolak
+belakang dengan prinsip #7 yang menuntut penegakan dapat diaudit.
+
+**Binary terikat platform.** Kompilasi pada mesin operator menghasilkan
+`darwin/arm64`; CI GitHub berjalan pada linux. Satu binary yang di-commit tidak
+melayani keduanya.
+
+**Binary dapat menyimpang dari source.** Tidak ada jaminan blob yang di-commit
+adalah hasil kompilasi source di commit yang sama.
+
+### Mengapa binary terkompilasi, bukan `go run` di dalam wrapper
+
+`go run` menghapus kebutuhan `make build`, tetapi mengukur ulang biaya start-up:
+
+```
+go run . (cache hangat)   : 50–70 ms per invokasi
+binary terkompilasi       : < 10 ms
+```
+
+Untuk runner, selisih itu tidak berarti — dipanggil sekali per task. Namun Phase 3
+(§59) membangun **PreToolUse hook**, yang dieksekusi pada setiap pemanggilan tool
+agent. Pada frekuensi itu 50–70 ms menumpuk menjadi hambatan nyata. Menetapkan
+binary terkompilasi sejak sekarang menghindari perubahan mekanisme di tengah jalan.
 
 Q11 mengunci `Bash` PM ke pola `scripts/<runner>.sh`. Mengganti pola itu berarti
 membuka kembali keputusan yang sudah ditutup dan melonggarkan satu-satunya batasan
@@ -193,8 +236,10 @@ path terlarang) dan A-05 (celah reservasi antara PR dan merge). Mengembalikan te
 - **Dua representasi kontrak** (YAML dan JSON) berarti dua kemungkinan sumber
   kesalahan bila materialisasi tidak setia. Dimitigasi: materialisasi divalidasi
   ulang terhadap JSON Schema yang sama setelah konversi
-- `bin/**` perlu masuk `.gitignore` atau dirilis sebagai artefak — belum diputuskan,
-  lihat bagian terbuka
+- **`make build` dapat terlupa**, sehingga binary tertinggal dari source. Tidak ada
+  penjaga otomatis sampai CI Phase 4 (§60) memverifikasi build ulang identik
+- **Go menjadi prasyarat mesin** bagi siapa pun yang menjalankan runner, sampai
+  artefak rilis per-platform tersedia pada Phase 4 (§60)
 - Contoh pada §30 dan §34 kini berbeda dari implementasi. Pembaca dokumen arsitektur
   saja akan memperoleh gambaran yang usang
 
@@ -202,9 +247,11 @@ path terlarang) dan A-05 (celah reservasi antara PR dan merge). Mengembalikan te
 
 | Pertanyaan | Kapan |
 |---|---|
-| `bin/m2s` di-commit, di-build lokal, atau dirilis sebagai artefak? | sebelum script pertama ditulis |
 | Apakah CI memverifikasi wrapper `.sh` benar-benar tipis? | Phase 4 (§60) |
 | Apakah CI menjalankan pemeriksaan kompatibilitas RE2 atas pola schema? | Phase 4 (§60) |
+| Apakah CI memverifikasi binary hasil build ulang identik dengan yang dipakai? | Phase 4 (§60) |
+
+Pertanyaan `bin/m2s` di-commit atau tidak **sudah dijawab** oleh keputusan #5.
 
 ---
 
@@ -221,6 +268,25 @@ filesystem.
 
 **Ditolak.** Memaksa perubahan Q11 dan §36. Penghematan satu lapisan tak langsung
 tidak sebanding dengan membuka kembali batasan tool PM.
+
+### Binary `bin/m2s` di-commit ke repository
+
+**Ditolak.** Menghapus prasyarat Go dan langkah `make build`, tetapi membuat komponen
+enforcement paling sensitif menjadi satu-satunya perubahan yang tidak dapat direview
+pada pull request, sekaligus mengikat repo pada satu platform. Lihat § Rasional.
+
+### Artefak rilis per-platform sebagai mekanisme utama
+
+**Ditolak untuk sekarang, diterima untuk Phase 4.** Jalur terbaik pada akhirnya:
+tidak menuntut Go di mesin pemakai dan tetap dapat direview lewat source. Namun
+mensyaratkan CI yang belum ada — Phase 4 (§60). Menunggu CI berarti menunda seluruh
+Phase 1.
+
+### `go run` di dalam wrapper `.sh`
+
+**Ditolak.** Menghapus langkah `make build`, tetapi biaya start-up 50–70 ms per
+invokasi menjadi hambatan pada PreToolUse hook Phase 3 (§59) yang dieksekusi setiap
+pemanggilan tool. Lihat § Rasional.
 
 ### YAML sepanjang alur, termasuk `.task/contract.json`
 

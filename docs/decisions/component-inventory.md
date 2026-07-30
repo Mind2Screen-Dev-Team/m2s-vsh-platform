@@ -223,10 +223,17 @@ CLAUDE.md
 .github/CODEOWNERS
 control/reservations/**
 .task/**
+cmd/m2s/**                          (source runner — penegak batas path)
+Makefile                            (target build runner)
 governance/capability-registry.yaml
 branch protection / rulesets        (setting GitHub)
 seluruh secret, token, credential
 ```
+
+`cmd/m2s/**` masuk daftar ini karena binary hasil kompilasinya adalah satu-satunya
+otoritas atas registry reservasi dan validasi path. Agent yang dapat menulis source
+runner dapat melonggarkan batas yang mengikatnya sendiri. `bin/**` tidak dicantumkan
+karena tidak di-commit (ADR-004 #5) — ia gitignored dan dibangun lokal.
 
 ---
 
