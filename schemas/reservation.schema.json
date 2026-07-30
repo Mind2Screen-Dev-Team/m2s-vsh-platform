@@ -27,15 +27,15 @@
     },
 
     "worktree": {
-      "description": "Path absolut worktree. Berada DI LUAR repository, default $HOME/.m2s/worktrees/<repository>/<task-id>, dapat di-override M2S_WORKTREE_ROOT (Q8). Bukan .claude/worktrees/ seperti contoh §30 — lihat ADR-004 #3.",
+      "description": "Path absolut worktree. Berada DI LUAR repository, default $HOME/.m2s/worktrees/<repository>/<task-id>, dapat di-override M2S_WORKTREE_ROOT (Q8). Bukan .claude/worktrees/ seperti contoh §30 — lihat ADR-004 #3. Schema hanya menolak pola anti-pattern §30 yang eksplisit; jaminan 'di luar repository' ditegakkan runner, karena hanya runner yang mengetahui lokasi repository.",
       "type": "string",
       "minLength": 1,
       "pattern": "^/",
       "allOf": [
         { "not": { "pattern": "(^|/)\\.\\.(/|$)" } },
         {
-          "not": { "pattern": "/\\.claude(/|$)" },
-          "description": "Worktree tidak boleh berada di dalam .claude/** yang merupakan forbidden path (A-01, Q8)."
+          "not": { "pattern": "/\\.claude/worktrees(/|$)" },
+          "description": "Anti-pattern §30: worktree di dalam .claude/** yang merupakan forbidden path (A-01, Q8)."
         }
       ]
     },

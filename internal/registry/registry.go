@@ -64,6 +64,12 @@ func (r *Reservation) TaskID() string     { return r.str("task_id") }
 func (r *Reservation) Repository() string { return r.str("repository") }
 func (r *Reservation) Status() string     { return r.str("status") }
 func (r *Reservation) OwnerRole() string  { return r.str("owner_role") }
+func (r *Reservation) Branch() string     { return r.str("branch") }
+func (r *Reservation) PRURL() string      { return r.str("pr_url") }
+
+// Worktree adalah path absolut worktree milik task ini. Selalu di luar
+// repository, sesuai Q8.
+func (r *Reservation) Worktree() string { return r.str("worktree") }
 
 // ReservedPaths mengembalikan himpunan path yang dikunci reservasi ini.
 func (r *Reservation) ReservedPaths() []string {
