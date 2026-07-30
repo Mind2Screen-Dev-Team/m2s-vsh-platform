@@ -402,26 +402,24 @@ func toAny(ss []string) []any {
 
 // isInside melaporkan apakah target berada di dalam pohon direktori parent.
 //
-// Kedua path di-resolve lewat EvalSymlinks bila ada, sehingga symlink tidak
-// dapat dipakai menyelundupkan worktree ke dalam repository.
+// Kedua path di-resolve lewat EvalSymlinks sehingga symlink tidak dapat dipakai
+// menyelundupkan worktree ke dalam repository.
+//
+// Target biasanya BELUM ADA saat pemeriksaan — worktree dibuat setelahnya.
+// EvalSymlinks gagal pada path yang belum ada, karena itu resolusi dilakukan
+// pada leluhur terdekat yang sudah ada lalu sisanya disambung kembali.
+//
+// Tanpa penyambungan itu, penjagaan ini gagal-BUKA pada macOS: `/var` adalah
+// symlink ke `/private/var`, sehingga parent yang ada teresolusi menjadi
+// `/private/var/...` sementara target yang belum ada tetap `/var/...`. Keduanya
+// lalu dianggap berada pada pohon berbeda dan worktree di dalam repo lolos.
+// Ditangkap TestIsInside.
 func isInside(target, parent string) (bool, error) {
-	resolve := func(p string) (string, error) {
-		abs, err := filepath.Abs(p)
-		if err != nil {
-			return "", fmt.Errorf("resolve %s: %w", p, err)
-		}
-		if real, err := filepath.EvalSymlinks(abs); err == nil {
-			return real, nil
-		}
-		// Worktree biasanya belum ada saat pemeriksaan; pakai bentuk absolut.
-		return abs, nil
-	}
-
-	t, err := resolve(target)
+	t, err := resolveEventual(target)
 	if err != nil {
 		return false, err
 	}
-	p, err := resolve(parent)
+	p, err := resolveEventual(parent)
 	if err != nil {
 		return false, err
 	}
@@ -430,5 +428,36 @@ func isInside(target, parent string) (bool, error) {
 	if err != nil {
 		return false, nil // pada volume berbeda: pasti di luar
 	}
-	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && rel != ".", nil
+	if rel == "." || rel == ".." {
+		return false, nil
+	}
+	return !strings.HasPrefix(rel, ".."+string(filepath.Separator)), nil
+}
+
+// resolveEventual mengembalikan bentuk path yang seluruh symlink-nya sudah
+// di-resolve, termasuk untuk path yang belum ada.
+func resolveEventual(p string) (string, error) {
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		return "", fmt.Errorf("resolve %s: %w", p, err)
+	}
+
+	// Cari leluhur terdekat yang sudah ada, kumpulkan sisa segmennya.
+	remaining := ""
+	cur := abs
+	for {
+		if real, err := filepath.EvalSymlinks(cur); err == nil {
+			if remaining == "" {
+				return real, nil
+			}
+			return filepath.Join(real, remaining), nil
+		}
+		next := filepath.Dir(cur)
+		if next == cur {
+			// Mencapai akar tanpa menemukan yang ada; pakai bentuk absolut.
+			return abs, nil
+		}
+		remaining = filepath.Join(filepath.Base(cur), remaining)
+		cur = next
+	}
 }
