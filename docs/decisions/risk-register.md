@@ -61,6 +61,12 @@ parent/child, glob vs exact file, dan case-sensitivity. Acceptance AC-2.3…AC-2
 matriks tersebut berbentuk table-driven test yang dijalankan CI — bukan pemeriksaan
 manual. Ini alasan utama pemilihan Go di atas Bash.
 
+**Progres 30 Juli 2026:** matriks ditulis sebagai spesifikasi normatif pada
+`docs/decisions/path-overlap-matrix.md` — 24 kasus, melampaui minimum 12. Prototipe
+algoritma memverifikasi 21 kasus dapat dipenuhi dan seluruhnya simetris; 3 kasus
+sisanya memerlukan konteks reservasi dan diverifikasi bersama `reserve-paths`.
+Risiko tetap 🟡 sampai implementasi `cmd/m2s` memuat kasus-kasus itu sebagai test.
+
 ---
 
 ### R-04 🟡 Shared file tanpa owner yang ditunjuk

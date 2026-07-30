@@ -131,6 +131,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/decisions/open-questions.md`](docs/decisions/open-questions.md) | Status A-01…A-16, D-01…D-03, V-01…V-05, dan daftar bagian arsitektur yang ditimpa ADR |
 | [`docs/decisions/component-inventory.md`](docs/decisions/component-inventory.md) | 62 komponen + klasifikasi kepemilikan |
 | [`docs/decisions/risk-register.md`](docs/decisions/risk-register.md) | R-01…R-27 |
+| [`docs/decisions/path-overlap-matrix.md`](docs/decisions/path-overlap-matrix.md) | Semantik glob & 24 kasus uji konflik reservasi (R-03) |
 | [`docs/decisions/capability-verification.md`](docs/decisions/capability-verification.md) | Bukti kapabilitas platform |
 | [`docs/adr/ADR-001-agent-merge-authority.md`](docs/adr/ADR-001-agent-merge-authority.md) | Kewenangan merge agent |
 | [`docs/adr/ADR-002-fx-injector-ownership.md`](docs/adr/ADR-002-fx-injector-ownership.md) | Kepemilikan DI injector |
