@@ -127,9 +127,9 @@ diperlakukan sebagai amandemen baseline.
   memerlukan batas tool dan batas path sendiri
 - **Empat role tanpa §17–§25 padanannya.** Kesembilan role lama memiliki bagian
   dokumen arsitektur yang merinci purpose, owns, responsibilities, allowed,
-  prohibited, writable paths, dan definition of done. Keempat role baru **belum**
-  memilikinya — harus ditulis saat Phase 2, dan itu pekerjaan yang tidak dapat
-  disalin begitu saja
+  prohibited, writable paths, dan definition of done.
+  **Tertutup 31 Juli 2026** oleh `docs/architecture/roles-extension-v0.1.0.md`
+  (§E1–§E4), yang memuat rincian setara berdasarkan materi dari pemilik arsitektur
 - **`ios-developer` menuntut runner bermesin macOS.** Belum ada mekanisme yang
   menyatakan prasyarat platform pada task contract. Dicatat sebagai terbuka
 - Daftar role terduplikasi pada `handoff.schema.json` (blok

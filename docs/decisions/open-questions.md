@@ -2,7 +2,7 @@
 
 **Tanggal:** 29 Juli 2026
 **Sumber:** analisis `docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`
-**Status:** 13 tertutup, 4 tertutup sebagian, 2 terbuka, 1 menunggu konfirmasi, 5 menunggu uji empiris
+**Status:** 14 tertutup, 4 tertutup sebagian, 2 terbuka, 5 menunggu uji empiris
 
 Register ini melacak setiap bagian dokumen arsitektur yang ambigu, kontradiktif,
 atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitektur,
@@ -33,7 +33,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
 | D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🔴 **terbuka** |
-| D-04 | Skala severity ditetapkan schema, bukan arsitektur | 🟡 menunggu konfirmasi |
+| D-04 | Skala severity ditetapkan schema, bukan arsitektur | ✅ tertutup — disetujui 2026-07-31 |
 | D-05 | Field `project` belum dipakai runner (multi-project) | ✅ diputuskan — model A untuk v0.1.0, model B ke v0.2.0 |
 | V-01…V-05 | Butuh uji empiris | ⏳ Phase 1 dan 3 (§58, §59) |
 
@@ -289,7 +289,7 @@ aktivasi ADR-001, yang bergantung pada Phase 4 (§60 — GitHub Workflow).
 
 ---
 
-### D-04 — Skala severity ditetapkan schema, bukan dokumen arsitektur 🟡
+### D-04 — Skala severity ditetapkan schema, bukan dokumen arsitektur ✅
 
 **Ditemukan 30 Juli 2026** saat menulis `handoff.schema.json`.
 
@@ -316,7 +316,9 @@ merge/tidak-merge plus dua tingkat catatan.
 menghendaki skala lain, `handoff.schema.json` perlu version bump dan seluruh handoff
 yang sudah tersimpan perlu dipetakan ulang.
 
-**Menunggu konfirmasi pemilik arsitektur.** Tidak memblokir Phase 1.
+**Disetujui pemilik arsitektur 31 Juli 2026.** Skala `blocker/major/minor/nit`
+ditetapkan berlaku. Tidak ada version bump karena belum ada handoff tersimpan yang
+memakai skala lain.
 
 ---
 

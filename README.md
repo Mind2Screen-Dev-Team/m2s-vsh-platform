@@ -105,7 +105,7 @@ ditimpa ADR.
 | Phase | Isi | Sumber | Status |
 |---|---|---|---|
 | 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
-| 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ⬜ |
+| 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ✅ selesai |
 | 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ⬜ |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ⬜ |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
@@ -143,6 +143,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/decisions/open-questions.md`](docs/decisions/open-questions.md) | Status A-01…A-16, D-01…D-05, V-01…V-05, dan daftar bagian arsitektur yang ditimpa ADR |
 | [`docs/decisions/component-inventory.md`](docs/decisions/component-inventory.md) | 62 komponen + klasifikasi kepemilikan |
 | [`docs/decisions/risk-register.md`](docs/decisions/risk-register.md) | R-01…R-27 |
+| [`docs/architecture/roles-extension-v0.1.0.md`](docs/architecture/roles-extension-v0.1.0.md) | §E1–§E4 — rincian 4 role tambahan (ADR-005) |
 | [`docs/decisions/path-overlap-matrix.md`](docs/decisions/path-overlap-matrix.md) | Semantik glob & 24 kasus uji konflik reservasi (R-03) |
 | [`docs/decisions/capability-verification.md`](docs/decisions/capability-verification.md) | Bukti kapabilitas platform |
 | [`docs/adr/ADR-001-agent-merge-authority.md`](docs/adr/ADR-001-agent-merge-authority.md) | Kewenangan merge agent |
