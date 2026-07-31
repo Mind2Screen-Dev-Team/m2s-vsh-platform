@@ -221,13 +221,35 @@ func cmdLaunchTask(args []string) int {
 	}
 	taskID := str(task, "task.id")
 
+	// Prasyarat platform diturunkan otomatis dari role sebelum diperiksa
+	// (ADR-006 pertanyaan terbuka, ditutup Phase 3 §59). Task ios-developer
+	// wajib platform darwin karena xcodebuild hanya tersedia di macOS; membuat
+	// keharusan ini eksplisit di runner mencegah task ios lolos launch lalu
+	// gagal jauh kemudian pada quality_gates di mesin yang salah.
+	//
+	// Ini penurunan, bukan penolakan: platform kosong/any pada role ios
+	// diperlakukan sebagai darwin, sedangkan platform yang bertentangan
+	// (linux) tetap ditolak sebagai kontrak yang salah.
+	role := str(task, "ownership.role")
+	wantPlatform := str(task, "execution.platform")
+	if role == "ios-developer" {
+		switch wantPlatform {
+		case "", "any", "darwin":
+			wantPlatform = "darwin"
+		default:
+			return fail(exitViolation,
+				"%s berrole ios-developer menuntut platform darwin, tetapi contract menyatakan %s (ADR-006 §59)",
+				taskID, wantPlatform)
+		}
+	}
+
 	// Prasyarat platform diperiksa sebelum reservasi dan worktree disentuh
 	// (ADR-006 #3). Menolak lebih awal berarti tidak ada worktree yatim yang
 	// harus dibersihkan manual ketika runner-nya memang salah mesin.
 	//
 	// Ini kontrak yang ditolak, bukan runner yang rusak — karena itu
 	// exitViolation, bukan exitError.
-	if want := str(task, "execution.platform"); want != "" && want != "any" {
+	if want := wantPlatform; want != "" && want != "any" {
 		if want != runtime.GOOS {
 			return fail(exitViolation,
 				"%s menuntut platform %s, sedangkan runner berjalan pada %s",

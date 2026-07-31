@@ -109,7 +109,7 @@ ditimpa ADR.
 | 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
 | 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ✅ selesai |
 | 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ✅ selesai |
-| 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ⬜ |
+| 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ✅ selesai |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
 | 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |

@@ -253,18 +253,52 @@ global yang berpotensi bertabrakan dengan konfigurasi project.
 
 ---
 
-## 10. Yang belum diverifikasi
+## 10. Verifikasi empiris Phase 3
 
-Butuh uji empiris pada Phase 1 dan 3 (§58, §59), karena tidak dapat dipastikan dari
-dokumentasi:
+| # | Pertanyaan | Status |
+|---|---|---|
+| V-01 | Apakah hook dapat membaca file di luar cwd? | *(dibuat tidak relevan oleh Q15 — runner menyuntikkan snapshot)* |
+| V-02 | Perilaku write `--add-dir` yang sebenarnya | belum |
+| V-03 | Presedensi `settings.json` project vs `settings.local.json` untuk aturan `deny` | belum |
+| V-04 | Apakah `permissions.deny` Bash dapat dielakkan lewat variabel shell | **✅ TERKONFIRMASI dapat dielakkan** |
+| V-05 | Perilaku `WorktreeCreate` hook terhadap worktree yang dibuat runner di luar sesi | belum |
 
-| # | Pertanyaan |
-|---|---|
-| V-01 | Apakah hook dapat membaca file di luar cwd? *(dibuat tidak relevan oleh keputusan Q15 — runner menyuntikkan snapshot)* |
-| V-02 | Perilaku write `--add-dir` yang sebenarnya |
-| V-03 | Presedensi `settings.json` project vs `settings.local.json` untuk aturan `deny` |
-| V-04 | Apakah `permissions.deny` Bash dapat dielakkan lewat variabel shell |
-| V-05 | Perilaku `WorktreeCreate` hook terhadap worktree yang dibuat runner di luar sesi |
+### V-04: Bash blocklist dapat dielakkan (Phase 3, §59)
+
+**Hasil uji empiris:**
+
+```bash
+# Shell var evasion — LOLOS
+echo '{"tool_input":{"command":"g=checkout; git $g main"}}' \
+  | bash .claude/hooks/block-dangerous-command.sh
+# exit 0 — tidak terblokir
+
+# String quoting — LOLOS
+echo '{"tool_input":{"command":"find . -delete"}}' \
+  | bash .claude/hooks/block-dangerous-command.sh
+# exit 0 — tidak terblokir
+
+# Pola utuh terdeteksi — TERBLOKIR
+echo '{"tool_input":{"command":"rm -rf build"}}' \
+  | bash .claude/hooks/block-dangerous-command.sh
+# exit 2 — terblokir
+```
+
+**Kesimpulan:** `permissions.deny` Bash(pattern) dan `block-dangerous-command.sh`
+**tidak dapat menangkap elakan shell-var/quoting** (R-08). Limitation ini diterima
+karena:
+
+1. Hook adalah **defense-in-depth**, bukan boundary (R-08 §42.2 eksplisit).
+2. Boundary sebenarnya: CI changed-path validation (tidak dapat dielakkan agent
+   lokal, R-07) + `permissions.deny` pola path (bukan command string).
+3. Pola blocklist akan tetap menangkap perintah naif mayoritas — elakan butuh
+   pengetahuan khusus dan ditelusuri V-04 dedicated.
+
+**Mitigasi berlapis:**
+
+- CI `validate-changed-paths` (R-07) — otoritas final atas changed file
+- `permissions.deny` Edit/Write pola path — terhadap `.claude/**`, `cmd/m2s/**`, dll
+- Branch protection Phase 4 — mencegah merge tak sah ke develop/main
 
 ---
 
