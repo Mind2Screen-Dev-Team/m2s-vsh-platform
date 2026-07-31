@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -54,6 +55,7 @@ type taskOpts struct {
 	base     string
 	allowed  []string
 	shared   string // path shared file; kosong berarti tidak ada
+	platform string // execution.platform; kosong berarti field tidak ditulis
 }
 
 func writeTask(t *testing.T, dir string, o taskOpts) string {
@@ -81,7 +83,11 @@ func writeTask(t *testing.T, dir string, o taskOpts) string {
 	b.WriteString("ownership:\n  role: " + o.role + "\n  repository: " + o.repo + "\n")
 	b.WriteString("  base_branch: " + o.base + "\n")
 	b.WriteString("  branch: agent/" + o.id + "-uji\n")
-	b.WriteString("execution:\n  isolation: worktree\n  max_turns: 30\n  timeout_minutes: 45\n")
+	b.WriteString("execution:\n  isolation: worktree\n")
+	if o.platform != "" {
+		b.WriteString("  platform: " + o.platform + "\n")
+	}
+	b.WriteString("  max_turns: 30\n  timeout_minutes: 45\n")
 	b.WriteString("paths:\n  allowed:\n")
 	for _, p := range o.allowed {
 		// Path dikutip: nilai yang diawali '*' adalah alias YAML dan akan
@@ -287,6 +293,84 @@ func TestCmdLaunchTaskRejectsWorktreeInsideRepo(t *testing.T) {
 	code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"})
 	if code != exitViolation {
 		t.Errorf("worktree di dalam repo = exit %d, mau %d (Q8, A-01)", code, exitViolation)
+	}
+}
+
+// TestCmdLaunchTaskRejectsPlatformMismatch menegakkan ADR-006 #3.
+//
+// Prasyarat platform diperiksa sebelum worktree dibuat, sehingga penolakan
+// tidak meninggalkan worktree yatim. Yang diuji di sini adalah keduanya:
+// exit code, dan tidak adanya sisa worktree.
+func TestCmdLaunchTaskRejectsPlatformMismatch(t *testing.T) {
+	// Nilai yang pasti tidak sama dengan runtime.GOOS mesin penguji.
+	other := "linux"
+	if runtime.GOOS == "linux" {
+		other = "darwin"
+	}
+
+	root := controlFixture(t)
+	dir := t.TempDir()
+	repo := t.TempDir()
+	wtRoot := t.TempDir()
+	silence(t)
+	t.Setenv("M2S_WORKTREE_ROOT", wtRoot)
+
+	task := writeTask(t, dir, taskOpts{id: "IOS-101", platform: other})
+	if code := cmdReservePaths([]string{"-control", root, "-task", task}); code != exitOK {
+		t.Fatalf("reservasi = exit %d", code)
+	}
+
+	code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"})
+	if code != exitViolation {
+		t.Errorf("platform %s pada runner %s = exit %d, mau %d (ADR-006 #3)",
+			other, runtime.GOOS, code, exitViolation)
+	}
+
+	// Penolakan mendahului `git worktree add`; tidak boleh ada sisa.
+	entries, err := os.ReadDir(wtRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("penolakan platform meninggalkan %d entri pada worktree root — "+
+			"pemeriksaan harus mendahului pembuatan worktree", len(entries))
+	}
+}
+
+// TestCmdLaunchTaskAcceptsMatchingPlatform memastikan pemeriksaan tidak
+// fail-closed terhadap nilai yang benar. Penjagaan yang menolak segalanya sama
+// tidak bergunanya dengan yang tidak menolak apa pun.
+func TestCmdLaunchTaskAcceptsMatchingPlatform(t *testing.T) {
+	for _, platform := range []string{"", "any", runtime.GOOS} {
+		name := platform
+		if name == "" {
+			name = "tanpa-field"
+		}
+		t.Run(name, func(t *testing.T) {
+			// runtime.GOOS di luar enum schema (misal windows) tidak dapat
+			// diuji: dokumennya akan ditolak validasi lebih dulu.
+			if platform == runtime.GOOS && platform != "darwin" && platform != "linux" {
+				t.Skipf("runtime.GOOS %q di luar enum schema", runtime.GOOS)
+			}
+
+			root := controlFixture(t)
+			dir := t.TempDir()
+			repo := t.TempDir()
+			silence(t)
+			t.Setenv("M2S_WORKTREE_ROOT", t.TempDir())
+
+			task := writeTask(t, dir, taskOpts{id: "BE-101", platform: platform})
+			if code := cmdReservePaths([]string{"-control", root, "-task", task}); code != exitOK {
+				t.Fatalf("reservasi = exit %d", code)
+			}
+
+			// repo bukan repository git, sehingga `git worktree add` gagal dan
+			// mengembalikan exitError. Yang penting: BUKAN exitViolation, yang
+			// berarti pemeriksaan platform sudah dilewati.
+			if code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"}); code == exitViolation {
+				t.Errorf("platform %q pada runner %s ditolak, seharusnya diterima", platform, runtime.GOOS)
+			}
+		})
 	}
 }
 

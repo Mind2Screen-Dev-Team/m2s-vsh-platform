@@ -38,7 +38,7 @@ Dimiliki **Human Workflow Maintainer**. Berada di control repository.
 | 11–17 | 7 template — task contract, handoff, failure report, review report, ADR, DESIGN.md, PR | Markdown/YAML | P1, P6, P9 |
 | 18 | 5 runner script — validate-task, reserve-paths, launch-task, collect-result, release-reservation | shell | P2 |
 | 19 | Library 6 hook | shell | P4 |
-| 20 | 10 template agent definition | Markdown + frontmatter | P3, P5, P9 |
+| 20 | 13 template agent definition | Markdown + frontmatter | P2 ✅ |
 | 21 | Template rules generik — architecture, security, testing, universal-agent-rules, rule-precedence | Markdown | P5 |
 | 22 | Template CI workflow + CODEOWNERS + checklist branch protection | YAML | P6 |
 
@@ -144,9 +144,14 @@ stop conditions.
 **Tidak boleh ada di sini:** secret, absolute path mesin, allowed path spesifik task
 (berubah per task — milik task contract).
 
-**Catatan:** `effort` belum ditetapkan Appendix A dokumen arsitektur. Perlu
-ditentukan per role saat **Phase 2 (§57 — Core Agents)** karena berpengaruh pada
-pengukuran biaya token di **Phase 8 (§64)**.
+**Catatan:** `effort` semula belum ditetapkan Appendix A dokumen arsitektur.
+**Ditetapkan 31 Juli 2026** oleh ADR-006 #2: `high` bagi PM, TL/SA, dan Code
+Reviewer; `low` bagi Technical Writer; `medium` bagi sepuluh role sisanya. Nilai
+ini menjadi baseline pengukuran biaya token **Phase 8 (§64)**.
+
+Sumber kanonik ketiga belas definisi adalah `templates/agents/<role>.md`.
+`.claude/agents/` memuat subset yang aktif per repository (Q10); keduanya dijaga
+identik oleh `TestDeployedAgentsMatchTemplates`.
 
 ---
 

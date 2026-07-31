@@ -85,6 +85,12 @@
           "enum": ["worktree"]
         },
         "background": { "type": "boolean", "default": true },
+        "platform": {
+          "description": "Prasyarat sistem operasi runner. `darwin` wajib bagi task ios-developer karena xcodebuild tidak tersedia di platform lain. Runner menolak exit 2 bila runtime.GOOS tidak cocok, sebelum worktree dibuat (ADR-006 #3). Opsional; tanpa field ini artinya `any`.",
+          "type": "string",
+          "enum": ["any", "darwin", "linux"],
+          "default": "any"
+        },
         "max_turns": { "type": "integer", "minimum": 1, "maximum": 200 },
         "timeout_minutes": { "type": "integer", "minimum": 1, "maximum": 480 }
       }

@@ -63,6 +63,8 @@ docs/
   system-analysis/  analisis sistem per requirement (owner: TL/SA)
 schemas/            JSON Schema untuk task, handoff, reservation, dll.
 templates/          template task contract, handoff, ADR, PR, review report
+templates/agents/   13 definisi role agent — sumber kanonik (human-only write)
+.claude/agents/     subset yang aktif di control repo: PM dan TL/SA (Q10)
 scripts/            wrapper tipis ke bin/m2s — pola scripts/<runner>.sh (Q11)
 cmd/m2s/            source runner: 5 subcommand (human-only write)
 internal/           pathmatch (deteksi overlap R-03), contract, registry
@@ -76,7 +78,7 @@ Binary `bin/m2s` **dibangun lokal dan tidak di-commit** (ADR-004 #5). Jalankan
 ```bash
 make build     # kompilasi bin/m2s
 make check     # fmt + vet + test -race
-make verify    # check + wrapper tipis + schema RE2
+make verify    # check + wrapper tipis + schema RE2 + 13 definisi agent
 ```
 
 ---
@@ -106,7 +108,7 @@ ditimpa ADR.
 |---|---|---|---|
 | 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
 | 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ✅ selesai |
-| 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ⬜ |
+| 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ✅ selesai |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ⬜ |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
 | 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
@@ -151,6 +153,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/adr/ADR-003-phase-order-contract-before-agents.md`](docs/adr/ADR-003-phase-order-contract-before-agents.md) | Pertukaran urutan Phase 1 dan 2 |
 | [`docs/adr/ADR-004-contract-format-and-runner-implementation.md`](docs/adr/ADR-004-contract-format-and-runner-implementation.md) | Format kontrak & bahasa runner |
 | [`docs/adr/ADR-005-additional-engineering-roles.md`](docs/adr/ADR-005-additional-engineering-roles.md) | Empat role engineering tambahan |
+| [`docs/adr/ADR-006-agent-definition-baseline.md`](docs/adr/ADR-006-agent-definition-baseline.md) | Baseline definisi 13 agent, `effort`, prasyarat platform, distribusi role |
 
 ---
 

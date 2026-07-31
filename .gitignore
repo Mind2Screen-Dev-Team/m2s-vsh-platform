@@ -25,6 +25,9 @@ secrets/
 # ── Worktree (defensif — lokasi default ada di luar repo) ─────────────
 .worktrees/
 .m2s-worktrees/
+# Q8/A-01 memindahkan worktree ke luar repo. Baris ini menjaga worktree
+# buatan tooling lain tidak ikut ter-commit sejak .claude/agents/ di-track.
+.claude/worktrees/
 
 # ── Log & artefak eksekusi ────────────────────────────────────────────
 *.log

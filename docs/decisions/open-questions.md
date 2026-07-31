@@ -393,6 +393,7 @@ bagian di bawah, baca ADR-nya lebih dulu.
 | §17.6, §18.5 | ADR-001 | PM & TL/SA boleh approve/merge ke non-`main` — **belum berlaku efektif**, lihat D-03 |
 | §57, §58 | ADR-003 | Urutan Phase 1 dan 2 ditukar |
 | §57, §17–§25 | ADR-005 | Role bertambah 9 → 13; Phase 2 menghasilkan 13 definisi agent |
+| Appendix A | ADR-006 | Baseline frontmatter 13 role; PM **tanpa** tool `Agent` (Q11); `effort` ditetapkan per role |
 | §30 | ADR-004 (Q8) | Lokasi worktree: `$HOME/.m2s/worktrees/<repository>/<task-id>`, bukan `.claude/worktrees/` |
 | §30 | ADR-004 (Q12) | Reservasi dilepas saat **merge**, bukan saat PR dibuat; status antara `reserved-pending-merge` |
 | §34 | ADR-004 (R-04) | Ditambah field `shared_file_ownership` |
