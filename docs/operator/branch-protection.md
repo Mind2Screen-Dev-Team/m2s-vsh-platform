@@ -121,6 +121,33 @@ aplikasi lewat PR, jangan push langsung (§16.5, R-20):
 | `templates/github/CODEOWNERS` | `.github/CODEOWNERS` |
 | `templates/github/PULL_REQUEST_TEMPLATE.md` | `.github/PULL_REQUEST_TEMPLATE.md` |
 
+#### Ke branch mana — tidak sama untuk ketiganya
+
+Diverifikasi terhadap dokumentasi GitHub, karena ketiganya berperilaku berbeda:
+
+| Berkas | Branch yang dibaca | Konsekuensi |
+|---|---|---|
+| `CODEOWNERS` | **base branch PR** — *"the CODEOWNERS file must be on the base branch of the pull request"* | wajib ada di **setiap** branch yang menjadi base: `develop`, `staging`, `main`. Satu salinan di `main` **tidak** melindungi PR ke `develop` |
+| `PULL_REQUEST_TEMPLATE.md` | **default branch saja** — *"You must create templates on the repository's default branch"* | cukup di `main`. Di `develop` saja tidak akan muncul sama sekali |
+| `workflows/*.yml` | `on.pull_request.branches` menyaring **base branch** | daftarkan setiap base yang dipakai. Berkas perlu ada di branch yang menjadi base PR |
+
+Karena itu distribusi Phase 4 memakai **satu PR per base branch per repo** (enam
+PR untuk dua repo), bukan satu PR ke `develop` saja.
+
+#### Catatan jalur: `git checkout` diblokir di sesi agent
+
+§42.2 memblokir `git checkout`/`switch`/`worktree`, dan A-08 menetapkan manajemen
+branch milik runner. Distribusi karena itu dilakukan lewat **GitHub API** (`git/blobs`
+→ `git/trees` → `git/commits` → `git/refs`), tanpa checkout lokal sama sekali. Ini
+bukan siasat mengelakkan hook — ia jalur yang sejalan dengan A-08, dan jejaknya
+terekam di API.
+
+⚠️ **Yang perlu diketahui:** `permissions.deny` pada `Edit`/`Write` **tidak** menahan
+tulisan lewat Bash (R-07) maupun lewat API. Jadi deny `.github/**` melindungi
+**control repo dari suntingan tool Edit/Write**, bukan menutup seluruh jalur menuju
+`.github/` di repo mana pun. Penahan sesungguhnya untuk repo aplikasi tetap
+**CODEOWNERS + human merge**, dan itulah sebabnya distribusi wajib lewat PR.
+
 Push workflow menuntut token ber-scope `workflow`. Bila ditolak:
 
 ```bash

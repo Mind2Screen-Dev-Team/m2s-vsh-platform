@@ -332,16 +332,23 @@ Audit hook mencatat tool call, berpotensi merekam argumen yang memuat secret.
 audit.
 
 **Lapisan tambahan yang ternyata sudah ada (ditemukan Phase 4, 2026-08-01):**
-**GitGuardian** (`app_id: 46505`) aktif sebagai check-run pada control repo — terlihat
-di PR #3 sebagai *"GitGuardian Security Checks"*, `conclusion: success`. Ia **tidak
-pernah tercatat** di dokumen mana pun sebelum ini, sehingga tak ada yang mengetahui
-cakupan maupun batasnya.
+**GitGuardian** (`app_id: 46505`) aktif sebagai check-run — terlihat di PR #3 control
+repo sebagai *"GitGuardian Security Checks"*, `conclusion: success`. Ia **tidak pernah
+tercatat** di dokumen mana pun sebelum ini, sehingga tak ada yang mengetahui cakupan
+maupun batasnya.
 
-⚠️ **Cakupannya timpang:** aktif di `m2s-vsh-platform`, **nol check-run** di
-`m2s-vsh-project-backend` dan `-frontend`. Jadi justru dua repo tempat agent akan
-menulis kode yang **tidak** terpindai. Jangan diandalkan sebagai lapisan sampai
-dipasang merata. Ia juga bukan pengganti R-25: GitGuardian memindai isi commit, bukan
-`.task/audit.log`.
+**Cakupan — dikoreksi pada hari yang sama.** Pemeriksaan pertama menyimpulkan
+GitGuardian tidak aktif di repo aplikasi (nol check-run). Itu keliru: angka nol
+muncul karena kedua repo **belum pernah punya PR sama sekali**, bukan karena aplikasi
+tidak terpasang. Setelah enam PR distribusi dibuka, GitGuardian melapor `success` pada
+**seluruh enam** PR di `m2s-vsh-project-backend` dan `-frontend`. Cakupannya merata.
+
+Pelajaran metodologis: ketiadaan sinyal bukan bukti ketiadaan lapisan. Ukur pada
+kondisi yang memang memicunya.
+
+**Batas yang tetap berlaku:** GitGuardian memindai isi commit, bukan `.task/audit.log`,
+sehingga ia **bukan** pengganti mitigasi R-25 di atas. Ia juga bukan required check —
+statusnya dilaporkan tetapi tidak menahan merge sampai didaftarkan.
 
 ---
 
