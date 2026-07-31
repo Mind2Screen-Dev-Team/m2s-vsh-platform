@@ -1,13 +1,8 @@
 # path-enforcement.yml — CI changed-path validation (§59, jaring kedua R-07).
-# LOKASI: template. Pindahkan ke .github/workflows/path-enforcement.yml saat
-# Phase 4 (§60) mengaktifkan required checks. Disimpan di docs/ci-templates/
-# sekarang karena OAuth token tanpa scope `workflow` tidak dapat push berkas di
-# bawah .github/workflows/ — pemindahan dilakukan manusia saat Phase 4.
 #
-#
-# STATUS: template Phase 3, DIAKTIFKAN Phase 4 (§60). Ditulis sekarang karena
-# §59 mendaftar "CI path validation" sebagai bagian Path Enforcement, tetapi
-# belum dijadikan required check sampai Phase 4 memasang branch protection.
+# Ditulis Phase 3 (§59) sebagai bagian "CI path validation". Belum menjadi
+# required check sampai Phase 4 (§60) memasang branch protection — aktivasi
+# required check adalah pekerjaan Phase 4.
 #
 # Mengapa CI, bukan hanya hook: hook lokal dapat dilewati agent lewat Bash
 # (R-07) atau elakan blocklist (R-08). CI mengulang pemeriksaan yang sama pada
