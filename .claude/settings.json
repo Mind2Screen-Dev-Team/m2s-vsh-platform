@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "default",
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/credentials*.json)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/*.pem)",
+      "Edit(**/*.key)",
+      "Edit(**/credentials*.json)",
+      "Write(.env)",
+      "Write(.env.*)",
+      "Write(**/secrets/**)",
+      "Write(**/*.pem)",
+      "Write(**/*.key)",
+      "Write(**/credentials*.json)",
+      "Edit(.claude/**)",
+      "Write(.claude/**)",
+      "Edit(.mneme/project_memory.json)",
+      "Write(.mneme/project_memory.json)",
+      "Edit(.task/**)",
+      "Write(.task/**)",
+      "Edit(cmd/m2s/**)",
+      "Write(cmd/m2s/**)",
+      "Edit(Makefile)",
+      "Write(Makefile)",
+      "Edit(governance/capability-registry.yaml)",
+      "Write(governance/capability-registry.yaml)",
+      "Edit(.github/CODEOWNERS)",
+      "Write(.github/CODEOWNERS)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod -R:*)",
+      "Bash(chown -R:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git worktree:*)",
+      "Bash(git -C:*)",
+      "Bash(docker system prune:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(terraform apply:*)",
+      "Bash(npm install:*)",
+      "Bash(npm i:*)",
+      "Bash(yarn add:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pip install:*)",
+      "Bash(go get:*)",
+      "Bash(prpm install:*)",
+      "Bash(claude plugin:*)"
+    ]
+  },
+  "env": {
+    "PONYTAIL_DEFAULT_MODE": "warn",
+    "PONYTAIL_SUBAGENT_MATCHER": "backend-engineer|frontend-engineer|fullstack-engineer|mobile-engineer|android-developer|ios-developer|code-reviewer|devops-release"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-secret-paths.sh" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-dangerous-command.sh" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-path-scope.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/audit-tool-use.sh" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-handoff.sh" }
+        ]
+      }
+    ]
+  }
+}

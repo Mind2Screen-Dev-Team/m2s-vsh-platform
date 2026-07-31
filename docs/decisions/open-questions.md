@@ -404,13 +404,13 @@ bagian di bawah, baca ADR-nya lebih dulu.
 
 ## Menunggu uji empiris
 
-| Kode | Pertanyaan | Dijadwalkan |
+| Kode | Pertanyaan | Status |
 |---|---|---|
 | V-01 | Apakah hook dapat membaca file di luar cwd? | *tidak lagi relevan — Q15 menghilangkan kebutuhannya* |
-| V-02 | Perilaku write `--add-dir` yang sebenarnya | Phase 3 (§59) |
-| V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | Phase 3 (§59) |
-| V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | Phase 3 (§59) |
-| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | Phase 1 (§58) |
+| V-02 | Perilaku write `--add-dir` yang sebenarnya | ⏳ **tetap terbuka** — butuh sesi Claude Code live, tidak dapat diuji dari bash. `permissions.deny` Edit/Write pola path terpasang sebagai mitigasi; verifikasi perilaku ditunda ke pilot Phase 7 (§63) |
+| V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | ⏳ **tetap terbuka** — butuh sesi live. Konvensi Claude Code: `.local.json` menimpa project settings, tetapi `deny` bersifat aditif (union). Perlu konfirmasi empiris sebelum diandalkan |
+| V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | ✅ **TERKONFIRMASI dapat dielakkan** (Phase 3, 2026-07-31) — `g=checkout; git $g` dan `find -delete` lolos hook. Limitation R-08 diterima; boundary = CI + `permissions.deny` path. Lihat `capability-verification.md` §10 |
+| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | ⏳ ditunda — worktree-lifecycle.sh guard secret terpasang; interaksi dengan runner Q13 diuji di pilot |
 
 ---
 

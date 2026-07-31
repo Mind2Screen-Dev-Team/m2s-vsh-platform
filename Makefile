@@ -102,9 +102,44 @@ verify-agents:
 		| grep -E '^(--- )?(PASS|FAIL|ok)' || true
 	@echo "ok  13 definisi agent terverifikasi"
 
+## verify-hooks: jalankan self-test tiap hook + test negatif enforcement
+##
+## Membuktikan kriteria Done §59: agent gagal menulis forbidden file. Setiap
+## hook fail-closed wajib punya self-test (R-24) dan setiap skenario §68 wajib
+## ditolak exit 2. bin/m2s dibangun lebih dulu karena validate-path-scope
+## mendelegasikan keputusan padanya.
+.PHONY: verify-hooks
+verify-hooks: build
+	@failed=0; \
+	for h in block-secret-paths block-dangerous-command validate-path-scope \
+	         audit-tool-use validate-handoff worktree-lifecycle; do \
+		f=".claude/hooks/$$h.sh"; \
+		if [ ! -x "$$f" ]; then \
+			echo "FAIL $$f tidak ada atau tidak executable (§42)"; failed=1; continue; \
+		fi; \
+		if ! head -1 "$$f" | grep -q '^#!'; then \
+			echo "FAIL $$f tanpa shebang"; failed=1; \
+		fi; \
+		out=$$(CLAUDE_PROJECT_DIR="$$(pwd)" bash "$$f" --selftest 2>&1) || { \
+			echo "FAIL $$f self-test:"; echo "$$out" | sed 's/^/    /'; failed=1; continue; \
+		}; \
+		echo "  $$out"; \
+	done; \
+	echo "--- test negatif §68 ---"; \
+	if [ -d tests/negative ]; then \
+		for t in tests/negative/*.test.sh; do \
+			[ -e "$$t" ] || continue; \
+			out=$$(CLAUDE_PROJECT_DIR="$$(pwd)" bash "$$t" 2>&1) || { \
+				echo "FAIL $$t:"; echo "$$out" | sed 's/^/    /'; failed=1; continue; \
+			}; \
+			echo "  $$out"; \
+		done; \
+	fi; \
+	if [ "$$failed" -eq 0 ]; then echo "ok  hook + test negatif lulus"; else exit 1; fi
+
 ## verify: seluruh pemeriksaan — dipakai sebelum menutup fase
 .PHONY: verify
-verify: check verify-wrappers verify-schemas verify-agents
+verify: check verify-wrappers verify-schemas verify-agents verify-hooks
 	@echo "ok  verifikasi lengkap"
 
 # ── Bantuan ───────────────────────────────────────────────────────────

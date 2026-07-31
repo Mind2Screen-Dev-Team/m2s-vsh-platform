@@ -1,0 +1,81 @@
+# path-enforcement.yml — CI changed-path validation (§59, jaring kedua R-07).
+# LOKASI: template. Pindahkan ke .github/workflows/path-enforcement.yml saat
+# Phase 4 (§60) mengaktifkan required checks. Disimpan di docs/ci-templates/
+# sekarang karena OAuth token tanpa scope `workflow` tidak dapat push berkas di
+# bawah .github/workflows/ — pemindahan dilakukan manusia saat Phase 4.
+#
+#
+# STATUS: template Phase 3, DIAKTIFKAN Phase 4 (§60). Ditulis sekarang karena
+# §59 mendaftar "CI path validation" sebagai bagian Path Enforcement, tetapi
+# belum dijadikan required check sampai Phase 4 memasang branch protection.
+#
+# Mengapa CI, bukan hanya hook: hook lokal dapat dilewati agent lewat Bash
+# (R-07) atau elakan blocklist (R-08). CI mengulang pemeriksaan yang sama pada
+# path yang benar-benar berubah di PR — tidak dapat dilewati agent lokal. Ini
+# otoritas final atas batas path (risk-register R-07: "CI adalah otoritas final").
+#
+# Task-id diambil dari nama branch `agent/<task-id>-<slug>` (§44). Contract
+# diambil dari control repo (workflow ini berjalan di repo aplikasi). Perubahan
+# di luar allowed_paths atau di dalam forbidden_paths menolak PR dengan exit 2.
+
+name: path-enforcement
+
+on:
+  pull_request:
+    branches: [develop, staging]
+
+# Read-only: workflow ini hanya memvalidasi, tidak menulis apa pun ke repo.
+permissions:
+  contents: read
+
+jobs:
+  validate-changed-paths:
+    runs-on: ubuntu-latest
+    # Hanya berlaku pada branch agent — PR manusia biasa tidak punya contract.
+    if: startsWith(github.head_ref, 'agent/')
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ekstrak task-id dari branch
+        id: task
+        run: |
+          # agent/BE-101-close-payroll → BE-101
+          branch="${{ github.head_ref }}"
+          task_id=$(printf '%s' "$branch" | sed -n 's#^agent/\([A-Z][A-Z0-9]*-[0-9]\+\)-.*#\1#p')
+          if [ -z "$task_id" ]; then
+            echo "::error::branch '$branch' tidak mengikuti pola agent/<task-id>-<slug> (§44)"
+            exit 1
+          fi
+          echo "task_id=$task_id" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout control repo
+        uses: actions/checkout@v4
+        with:
+          repository: fajarcandraaa/m2s-vsh-platform
+          path: .control
+          fetch-depth: 1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: .control/go.mod
+
+      - name: Bangun runner
+        working-directory: .control
+        run: make build
+
+      - name: Validasi changed path terhadap contract
+        run: |
+          task_id="${{ steps.task.outputs.task_id }}"
+          contract=".control/control/tasks/specifications/${task_id}.yaml"
+          if [ ! -f "$contract" ]; then
+            echo "::error::contract $contract tidak ditemukan di control repo"
+            exit 1
+          fi
+          # Path yang berubah relatif base branch PR.
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > changed.txt
+          echo "changed files:"; cat changed.txt
+          .control/bin/m2s validate-changed-paths -contract "$contract" -changed changed.txt
