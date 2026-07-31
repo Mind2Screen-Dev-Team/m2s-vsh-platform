@@ -35,7 +35,7 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🟠 **terbuka, biaya terjawab** — Team **tidak** dibutuhkan; ruleset `restrict updates` membukanya tanpa migrasi (ADR-007 #7). Menunggu GitHub App + V-05 |
 | D-04 | Skala severity ditetapkan schema, bukan arsitektur | ✅ tertutup — disetujui 2026-07-31 |
 | D-05 | Field `project` belum dipakai runner (multi-project) | ✅ diputuskan — model A untuk v0.1.0, model B ke v0.2.0 |
-| V-01…V-05 | Butuh uji empiris | ⏳ Phase 1 dan 3 (§58, §59) |
+| V-01…V-08 | Butuh uji empiris | ⏳ Phase 1, 3, 4 (§58, §59, §60) — V-04, V-06, V-07, V-08 sudah terjawab |
 
 ---
 
@@ -269,40 +269,47 @@ di sisi GitHub** — `m2s-worker` tidak dapat dilarang me-merge. Akibatnya keput
 ADR-001 (tidak ada identitas agent ber-scope admin) juga kehilangan penegakannya.
 Acceptance §66 #9 belum dapat diuji.
 
-**Opsi — diperbarui 31 Juli 2026 (Phase 4, ADR-007 #7).** Opsi Team **dicabut**;
-riset dokumentasi resmi menunjukkan ia tidak dibutuhkan untuk push restriction.
+**Opsi — diperbarui 31 Juli 2026 (Phase 4, ADR-007 #7), DIKOREKSI 1 Agustus 2026
+oleh uji empiris V-06/V-07/V-08.** Opsi Team tetap **dicabut**. Tetapi kesimpulan
+"ruleset membuka restriction tanpa migrasi" **hanya sebagian benar** — lihat V-08.
 
 | Opsi | Biaya | Membuka | Catatan |
 |---|---|---|---|
-| **Ruleset `restrict updates` + bypass list** | 0 | push/merge restriction | tanpa migrasi. Rule *restrict updates*: *"only users with bypass permissions can push to branches…"*. Bypass list menerima `actor_type: Integration` (GitHub App) di repo personal — REST docs hanya menyatakan `OrganizationAdmin` yang *"not applicable for personal repositories"*. Cocok dengan ADR-001 #5 yang memang memilih GitHub App |
-| Pindahkan repo pilot ke organization (Free) | 0 | push restriction **dan** merge queue | **Free terkonfirmasi cukup untuk repo public**: *"You can enable branch restrictions in public repositories owned by a GitHub Free organization."* Org `Mind2Screen-Dev-Team` sudah ada |
-| ~~Pindahkan + upgrade org ke Team~~ | ~~~$4/seat/bulan~~ | — | **dicabut.** Tidak dibutuhkan untuk push restriction. Team hanya dibutuhkan D-02 (repo private) |
+| **Ruleset `restrict updates` + bypass `User`/`RepositoryRole`** | 0 | push/merge restriction **untuk identitas manusia** | tanpa migrasi. Terverifikasi: ruleset menolak push pemilik repo (`GH013`) bila bypass kosong, dan melepasnya bila masuk list. `bypass_mode: pull_request` memisahkan hak merge dari hak push langsung. **Batasnya:** GitHub App tidak dapat menjadi bypass actor di repo personal (V-08) |
+| Pindahkan repo pilot ke organization (Free) | 0 | push restriction **+ GitHub App sebagai bypass actor** + merge queue | **Free terkonfirmasi cukup untuk repo public.** Satu-satunya jalur yang memenuhi ADR-001 #5 secara utuh, karena App harus menjadi bagian *owner organization*. Org `Mind2Screen-Dev-Team` sudah ada |
+| ~~Pindahkan + upgrade org ke Team~~ | ~~~$4/seat/bulan~~ | — | **dicabut.** Tidak dibutuhkan. Team hanya untuk D-02 (repo private) |
 | Tetap di akun personal tanpa ruleset | 0 | — | lapisan #7 dan #8 tetap soft rule sepanjang pilot |
 
-**Sudah diverifikasi 31 Juli 2026.** Pertanyaan "apakah org Free cukup atau harus
-Team" **terjawab: Free cukup** untuk repo public. Lebih dari itu, migrasi ternyata
-bukan satu-satunya jalan — ruleset membuka restriction tanpa memindahkan repo.
-Rincian dan perintah `gh api` di `docs/operator/branch-protection.md`.
+**Yang berubah karena V-08.** ADR-007 #7 menyimpulkan dari dokumentasi bahwa jalur
+"ruleset tanpa migrasi" cukup untuk ADR-001 #5 (model dua identitas berbasis GitHub
+App). Uji API membantahnya:
 
-**Yang justru menuntut organization: merge queue.** *"Pull request merge queues are
-available in any public repository owned by an organization."* Kepemilikan org, bukan
-visibilitas, dan tidak ada plan yang membukanya untuk repo akun personal. Ini
-mengoreksi alasan Q16, yang menyebut merge queue *"tersedia setelah repository
-dijadikan public"* — tidak akurat. Lihat ADR-007 #3.
+```
+PUT /repos/fajarcandraaa/m2s-vsh-rules-probe/rulesets/20155906
+422 Actor GitHub Actions integration must be part of the ruleset source
+    or owner organization
+```
 
-**Dua hal yang dokumentasi tidak menjawab** — dicatat sebagai V-05 dan V-06 di
-bagian "Menunggu uji empiris". V-05 menentukan apakah ruleset benar-benar mengikat
-pemilik repo; bila tidak, `restrict updates` menahan agent tetapi tidak menahan
-pemilik — cukup untuk ADR-001 #3, tidak cukup untuk #4.
+Jadi di repo akun personal, ruleset dapat membatasi **manusia dan role**, tetapi
+**tidak dapat memberi pengecualian kepada GitHub App**. Model `m2s-worker`/
+`m2s-approver` sebagaimana ADR-001 #5 merancangnya (GitHub App, bukan machine user)
+karena itu **menuntut organization** — bukan karena push restriction, melainkan
+karena bypass actor.
+
+**Kabar baiknya dari V-06:** ruleset **mengikat pemilik repo** (`GH013`,
+`current_user_can_bypass: "never"`), berbeda dari classic protection di mana admin
+selalu dapat push. Itu membuat ADR-001 **#4** ("tidak ada identitas agent ber-scope
+admin") dapat ditegakkan — sesuatu yang classic protection tidak pernah bisa
+berikan, bahkan di organization.
 
 **Bertautan dengan D-02** — keduanya bermuara pada status organization, tetapi
 **tidak lagi pada biaya yang sama**. D-02 (repo klien private) tetap menuntut Team;
 D-03 tidak.
 
-**Menunggu keputusan.** Tidak memblokir Phase 1–4. Phase 4 (§60) sudah memasang
-required check dan CODEOWNERS tanpa bergantung D-03; yang masih tertahan adalah
-restriction *siapa* boleh merge — menunggu GitHub App dibuat, lalu ruleset dipasang.
-Kriteria Done §60 karena itu tercapai sebagian (ADR-007 #8).
+**Menunggu keputusan.** Tidak memblokir Phase 1–4. Yang masih tertahan adalah
+restriction *siapa* boleh merge lewat identitas App — dan V-07 menunjukkan itu
+menuntut migrasi ke organization, bukan sekadar membuat App. Kriteria Done §60
+karena itu tercapai sebagian (ADR-007 #8).
 
 ---
 
@@ -427,9 +434,10 @@ bagian di bawah, baca ADR-nya lebih dulu.
 | V-02 | Perilaku write `--add-dir` yang sebenarnya | ⏳ **tetap terbuka** — butuh sesi Claude Code live, tidak dapat diuji dari bash. `permissions.deny` Edit/Write pola path terpasang sebagai mitigasi; verifikasi perilaku ditunda ke pilot Phase 7 (§63) |
 | V-03 | Presedensi `settings.json` vs `settings.local.json` untuk `deny` | ⏳ **tetap terbuka** — butuh sesi live. Konvensi Claude Code: `.local.json` menimpa project settings, tetapi `deny` bersifat aditif (union). Perlu konfirmasi empiris sebelum diandalkan |
 | V-04 | Apakah `permissions.deny` Bash dapat dielakkan variabel shell | ✅ **TERKONFIRMASI dapat dielakkan** (Phase 3, 2026-07-31) — `g=checkout; git $g` dan `find -delete` lolos hook. Limitation R-08 diterima; boundary = CI + `permissions.deny` path. Lihat `capability-verification.md` §10 |
-| V-05 | Apakah pemilik repo otomatis ter-bypass ruleset tanpa masuk bypass list | ⏳ **terbuka** (D-03, Phase 4) — docs menyatakannya untuk classic protection (*"People and apps with admin permissions… are always able to push to a protected branch"*) tetapi **tidak** untuk rulesets. Menentukan apakah `restrict updates` mengikat pemilik repo: bila tidak, ia menahan agent tetapi tidak menahan pemilik — cukup untuk ADR-001 #3, tidak cukup untuk #4. Uji di repo sekali-pakai sebelum dipasang ke repo pilot |
-| V-06 | Apakah role "Maintain" muncul di bypass picker repo personal | ⏳ **terbuka** (D-03, Phase 4) — role Maintain didokumentasikan sebagai role repo organization; halaman rulesets tidak menyatakan apakah ia tersedia di repo personal. `actor_type: RepositoryRole` ada di REST API, nilainya yang tidak jelas. Tidak memblokir: `Integration` (GitHub App) sudah cukup untuk ADR-001 #5 |
-| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | ⏳ ditunda — worktree-lifecycle.sh guard secret terpasang; interaksi dengan runner Q13 diuji di pilot |
+| V-06 | Apakah pemilik repo otomatis ter-bypass ruleset tanpa masuk bypass list | ✅ **TIDAK ter-bypass** (diuji 2026-08-01, repo `m2s-vsh-rules-probe`) — ruleset `restrict updates` dengan `bypass_actors: []` menolak push pemilik: `GH013: Cannot update this protected ref`, dan API melaporkan `current_user_can_bypass: "never"`. **Berbeda dari classic protection**, yang menyatakan admin *"always able to push to a protected branch"*. Konsekuensi: ruleset mengikat pemilik repo, sehingga ADR-001 **#4** (bukan hanya #3) dapat ditegakkan tanpa organization |
+| V-07 | Apakah role "Maintain" tersedia sebagai bypass actor di repo personal | ✅ **`RepositoryRole` diterima** (diuji 2026-08-01) — `actor_id` 2, 4, dan 5 seluruhnya diterima API di repo akun personal. Ketersediaan di **picker UI** belum dilihat; ruleset probe sengaja dibiarkan hidup untuk itu. Tidak memblokir apa pun |
+| V-08 | Apakah `actor_type: Integration` (GitHub App) dapat menjadi bypass actor di repo **akun personal** | 🔴 **TIDAK — ditolak** (diuji 2026-08-01): `422 Actor GitHub Actions integration must be part of the ruleset source or owner organization`. **Mengoreksi ADR-007 #7 dan D-03**, yang menyimpulkan dari dokumentasi bahwa hanya `OrganizationAdmin` yang tak berlaku di repo personal. Uji API membantahnya: App harus menjadi bagian dari **owner organization**. Lihat D-03 |
+| V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | ⏳ **terbuka, dan lebih buruk dari yang tercatat** — klaim "guard secret terpasang" **tidak akurat**: `worktree-lifecycle.sh` ada di disk dan self-test-nya lulus, tetapi **tidak terdaftar di `.claude/settings.json`** (hanya event `PreToolUse`, `PostToolUse`, `SubagentStop` terdaftar; tidak ada `WorktreeCreate`/`WorktreeRemove`). Ditemukan Phase 4, 2026-08-01. Hook tidak pernah dipanggil runtime, sehingga mitigasi R-26 dan §42.6 **belum berjalan**. Lihat T-02 |
 
 ---
 

@@ -205,21 +205,45 @@ PUT /repos/fajarcandraaa/<repo>/branches/main/protection
 
 **Repository rulesets tidak punya batasan itu.** Rule *restrict updates*: *"only
 users with bypass permissions can push to branches or tags whose name matches the
-pattern you specify."* Bypass list menerima `actor_type: Integration` (GitHub App)
-di repo personal — REST docs hanya menyatakan `OrganizationAdmin` yang *"not
-applicable for personal repositories"*.
+pattern you specify."*
 
-Karena ADR-001 #5 memilih GitHub App, pola ini mereplikasi apa yang `422` tolak,
-**tanpa migrasi dan tanpa biaya**.
+### Hasil uji empiris 1 Agustus 2026 (repo `m2s-vsh-rules-probe`)
 
-Belum terpasang — menunggu GitHub App `m2s-worker`/`m2s-approver` dibuat. Bentuknya:
+Diuji langsung terhadap API, bukan disimpulkan dari dokumentasi:
+
+| Uji | Hasil | Arti |
+|---|---|---|
+| Ruleset `restrict updates`, bypass **kosong**, push sebagai **pemilik repo** | ❌ `GH013: Cannot update this protected ref`; `current_user_can_bypass: "never"` | **Ruleset mengikat pemilik repo** (V-06). Berbeda dari classic protection, di mana admin *"always able to push"*. Ini yang membuat ADR-001 **#4** dapat ditegakkan |
+| Pemilik dimasukkan bypass list (`User`, `always`) | ✅ push lolos (`51d15cd..266f050`) | bypass list berfungsi |
+| `bypass_mode: "pull_request"`, push **langsung** | ❌ `GH013` | hak merge lewat PR terpisah dari hak push langsung — persis yang model dua identitas butuhkan |
+| `actor_type: RepositoryRole`, id 2 / 4 / 5 | ✅ ketiganya diterima | role tersedia sebagai bypass actor di repo personal (V-07) |
+| `actor_type: OrganizationAdmin` | ❌ `422 ruleset source must be in an organization` | sesuai dokumentasi |
+| **`actor_type: Integration` (GitHub App)** | ❌ **`422 Actor GitHub Actions integration must be part of the ruleset source or owner organization`** | **V-08 — mengoreksi rencana semula** |
+
+### ⚠️ V-08 mengubah jalur ADR-001 #5
+
+Dokumentasi menyiratkan hanya `OrganizationAdmin` yang tak berlaku di repo personal.
+Uji API membantahnya: **GitHub App juga tidak dapat menjadi bypass actor** kecuali ia
+bagian dari owner organization.
+
+Akibatnya, di repo akun personal ruleset dapat membatasi **manusia dan role**, tetapi
+**tidak dapat memberi pengecualian kepada App**. Model `m2s-worker`/`m2s-approver`
+sebagaimana ADR-001 #5 merancangnya (GitHub App, bukan machine user) karena itu
+**menuntut migrasi ke organization** — bukan karena push restriction, melainkan karena
+bypass actor.
+
+Yang **bisa** dilakukan sekarang tanpa migrasi: mengunci `develop`/`staging` dengan
+`restrict updates` dan memberi bypass kepada identitas **manusia** dengan
+`bypass_mode: pull_request`. Itu menahan seluruh push langsung termasuk milik pemilik
+repo — lebih kuat dari classic protection, tetapi belum memisahkan worker dari
+approver.
 
 ```bash
-# Lihat ruleset yang ada (0 di ketiga repo per 31 Juli 2026).
+# Lihat ruleset yang ada (0 di ketiga repo pilot per 1 Agustus 2026).
 gh api "repos/fajarcandraaa/<repo>/rulesets" --jq 'length'
 
-# Kerangka: kunci develop/staging, hanya App tertentu yang boleh mendorong.
-# <APP_ID> = id instalasi GitHub App m2s-approver.
+# Kunci develop/staging; hanya bypass yang tercantum boleh mengubahnya.
+# Ganti actor_id dengan hasil `gh api user --jq .id`.
 gh api -X POST "repos/fajarcandraaa/<repo>/rulesets" --input - <<'JSON'
 {
   "name": "agent-push-restriction",
@@ -230,26 +254,17 @@ gh api -X POST "repos/fajarcandraaa/<repo>/rulesets" --input - <<'JSON'
   },
   "rules": [{ "type": "update" }],
   "bypass_actors": [
-    { "actor_type": "Integration", "actor_id": 0, "bypass_mode": "always" }
+    { "actor_type": "User", "actor_id": 0, "bypass_mode": "pull_request" }
   ]
 }
 JSON
 ```
 
-`bypass_mode: "pull_request"` juga tersedia — *"an actor can only bypass rules on
-pull requests"* — berguna untuk memberi hak merge tanpa hak push langsung.
-
-**Uji di repo sekali-pakai lebih dulu.** Dua hal yang dokumentasi tidak menjawab
-dan belum diuji:
-
-| Kode | Pertanyaan |
-|---|---|
-| V-05 | apakah pemilik repo otomatis ter-bypass ruleset tanpa masuk bypass list |
-| V-06 | apakah role "Maintain" muncul di bypass picker repo personal |
-
-V-05 menentukan apakah ruleset benar-benar mengikat pemilik repo. Bila tidak,
-`restrict updates` di repo personal menahan agent tetapi tidak menahan pemilik —
-cukup untuk ADR-001 #3, tidak cukup untuk #4.
+**Uji di repo sekali-pakai lebih dulu.** Repo probe
+`fajarcandraaa/m2s-vsh-rules-probe` sengaja dibiarkan hidup dengan ruleset aktif;
+bypass picker UI dapat diperiksa di
+`https://github.com/fajarcandraaa/m2s-vsh-rules-probe/rules/20155906`. Hapus repo itu
+bila sudah tidak diperlukan.
 
 ---
 

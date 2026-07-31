@@ -181,8 +181,27 @@ push restriction. Dua jalur yang tersisa, keduanya tanpa biaya:
 | Pindah ke organization Free (`Mind2Screen-Dev-Team`) | ya | push restriction **dan** merge queue |
 
 Dua hal yang dokumentasi tidak menjawab dicatat sebagai verifikasi empiris baru:
-**V-05** apakah pemilik repo otomatis ter-bypass ruleset tanpa masuk bypass list,
-dan **V-06** apakah role "Maintain" muncul di bypass picker repo personal.
+**V-06** apakah pemilik repo otomatis ter-bypass ruleset tanpa masuk bypass list,
+dan **V-07** apakah role "Maintain" tersedia sebagai bypass actor di repo personal.
+*(Dinomori ulang 1 Agustus 2026: V-05 sudah dipakai untuk perilaku `WorktreeCreate`.)*
+
+> **Koreksi 1 Agustus 2026 — keputusan #7 di atas tidak sepenuhnya benar.**
+> Uji empiris (repo `m2s-vsh-rules-probe`) menemukan **V-08**: `actor_type:
+> Integration` **ditolak** di repo akun personal — `422 Actor GitHub Actions
+> integration must be part of the ruleset source or owner organization`. Jadi
+> ruleset di repo personal dapat membatasi manusia dan role, tetapi **tidak dapat
+> memberi pengecualian kepada GitHub App**. Karena ADR-001 #5 memakai App, jalur
+> "tanpa migrasi" **tidak cukup** untuk model dua identitas; itu menuntut
+> organization.
+>
+> Yang tetap berlaku dari #7: opsi Team tetap dicabut (org **Free** cukup), dan
+> V-06 menemukan sesuatu yang lebih kuat dari dugaan — ruleset **mengikat pemilik
+> repo** (`GH013`, `current_user_can_bypass: "never"`), berbeda dari classic
+> protection. Itu membuat ADR-001 **#4** dapat ditegakkan, hal yang classic
+> protection tidak pernah bisa berikan bahkan di organization.
+>
+> Rincian: `docs/decisions/open-questions.md` D-03 dan
+> `docs/operator/branch-protection.md`.
 
 ### 8. Phase 4 dinyatakan selesai-sebagian
 
@@ -270,7 +289,12 @@ nol pada saat yang paling sibuk.
 - Apakah control repo memerlukan `develop`/`staging` (tercatat "belum
   dikerjakan" di open-questions). Untuk sekarang workflow control repo menargetkan
   `main`.
-- V-05 dan V-06 menunggu uji empiris.
+- V-06, V-07, V-08 **sudah diuji** 1 Agustus 2026 — lihat koreksi pada keputusan #7.
+  Yang tersisa: ketersediaan role di **picker UI** (bagian visual V-07), dan apakah
+  migrasi ke `Mind2Screen-Dev-Team` diambil supaya App dapat menjadi bypass actor.
+- **T-04** — `worktree-lifecycle.sh` tidak terdaftar di `settings.json`, sehingga
+  mitigasi R-26 dan §42.6 belum berjalan. Ditemukan saat Phase 4; menunggu keputusan
+  pasang-atau-catat (`docs/operator/phase-4-human-only-patches.md` §3).
 - Apakah `verify-github` juga memeriksa kesamaan byte antara artefak kanonik dan
   salinannya di repo aplikasi. Menuntut akses jaringan dari Makefile, yang belum
   pernah dilakukan target mana pun.

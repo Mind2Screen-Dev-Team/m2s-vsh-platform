@@ -331,15 +331,38 @@ Audit hook mencatat tool call, berpotensi merekam argumen yang memuat secret.
 **Mitigasi:** redaksi pada `audit-tool-use.sh`; hook secret-path berjalan **sebelum**
 audit.
 
+**Lapisan tambahan yang ternyata sudah ada (ditemukan Phase 4, 2026-08-01):**
+**GitGuardian** (`app_id: 46505`) aktif sebagai check-run pada control repo — terlihat
+di PR #3 sebagai *"GitGuardian Security Checks"*, `conclusion: success`. Ia **tidak
+pernah tercatat** di dokumen mana pun sebelum ini, sehingga tak ada yang mengetahui
+cakupan maupun batasnya.
+
+⚠️ **Cakupannya timpang:** aktif di `m2s-vsh-platform`, **nol check-run** di
+`m2s-vsh-project-backend` dan `-frontend`. Jadi justru dua repo tempat agent akan
+menulis kode yang **tidak** terpindai. Jangan diandalkan sebagai lapisan sampai
+dipasang merata. Ia juga bukan pengganti R-25: GitGuardian memindai isi commit, bukan
+`.task/audit.log`.
+
 ---
 
-### R-26 🟢 Sisa worktree
+### R-26 🟠 Sisa worktree — **mitigasi belum berjalan**
 
 §45 menuntut uncommitted changes dilaporkan sebelum cleanup.
 
-**Mitigasi:** `worktree-lifecycle.sh` menyimpan hasil sebelum cleanup dan **tidak
-pernah** menyalin secret (§42.6). `WorktreeCreate` membatalkan pembuatan pada
-**setiap** exit non-zero — cocok sebagai guard secret.
+**Mitigasi yang dirancang:** `worktree-lifecycle.sh` menyimpan hasil sebelum cleanup
+dan **tidak pernah** menyalin secret (§42.6). `WorktreeCreate` membatalkan pembuatan
+pada **setiap** exit non-zero — cocok sebagai guard secret.
+
+🔴 **Diturunkan dari 🟢 ke 🟠 pada 2026-08-01 (Phase 4, temuan T-04).** Mitigasi di
+atas **tidak berjalan**: `worktree-lifecycle.sh` ada di disk, executable, self-test
+lulus, dan diverifikasi `Makefile:115` — tetapi **tidak terdaftar di
+`.claude/settings.json`**. Event yang terdaftar hanya `PreToolUse`, `PostToolUse`,
+`SubagentStop`; tidak ada `WorktreeCreate`/`WorktreeRemove`. Hook tidak pernah
+dipanggil runtime.
+
+Empat dokumen menyatakannya aktif dan keliru: `hook-enforcement.md:42` ("fail-closed"),
+`component-inventory.md:203`, register ini sendiri, dan `open-questions.md` V-05
+("guard secret terpasang"). Lihat **T-04**.
 
 ---
 

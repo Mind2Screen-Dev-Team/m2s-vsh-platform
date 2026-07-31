@@ -39,7 +39,40 @@ di Claude Code (T-01, R-24) — karena itu setiap jalur penolakan memakai `exit 
 | `validate-path-scope.sh` | PreToolUse (Edit/Write) | tolak tulis di luar `allowed_paths` task contract (§42.1) | fail-closed |
 | `audit-tool-use.sh` | PostToolUse | catat tool use ke `.task/audit.log` | fail-open (audit) |
 | `validate-handoff.sh` | SubagentStop | tolak handoff tak lengkap/tak valid schema (§42.5) | fail-closed |
-| `worktree-lifecycle.sh` | WorktreeCreate/Remove | guard secret, simpan report sebelum cleanup (§42.6) | fail-closed |
+| `worktree-lifecycle.sh` | WorktreeCreate/Remove | guard secret, simpan report sebelum cleanup (§42.6) | ⚠️ **TIDAK TERPASANG** — lihat catatan di bawah |
+
+### ⚠️ `worktree-lifecycle.sh` ada tetapi TIDAK terdaftar (T-04)
+
+**Ditemukan 1 Agustus 2026 (Phase 4).** Berkasnya ada, executable, self-test lulus,
+dan `make verify-hooks` melaporkan `ok worktree-lifecycle self-test lulus` —
+tetapi hook itu **tidak punya entri di `.claude/settings.json`**:
+
+```
+event terdaftar: PreToolUse, PostToolUse, SubagentStop
+                 (tidak ada WorktreeCreate / WorktreeRemove)
+```
+
+Jadi ia **tidak pernah dipanggil saat runtime**. Guard secret §42.6 dan mitigasi R-26
+belum berjalan. Baris hijau pada keluaran `make verify` **bukan** bukti hook ini
+aktif — ia hanya menguji fungsi internal skrip.
+
+Ini bentuk gate palsu yang berbeda dari yang ditangani ADR-007 #2: bukan status yang
+tak terlapor, melainkan penjaga yang tak pernah dipanggil. Kerabat R-24.
+
+**Belum diputuskan** — dua jalan, keduanya menuntut sunting `settings.json`
+(human-only write):
+
+| Jalan | Bila |
+|---|---|
+| Daftarkan pada `WorktreeCreate`/`WorktreeRemove` | §42.6 memang menuntutnya aktif. Event sudah diverifikasi tersedia (`capability-verification.md:69` ✅) |
+| Catat sebagai sengaja-mati | manajemen worktree dianggap cukup di runner (Q13/A-08: `launch-task` menjalankan `git worktree add` di luar sesi agent) |
+
+Bukti condong ke **jalan pertama**: §42.6 menuntutnya, event-nya tersedia, hook-nya
+sudah ditulis lengkap, dan tiga dokumen lain sudah menyatakannya sebagai mitigasi
+aktif. Tidak ada satu pun catatan yang menyatakan ia sengaja dibiarkan mati. Isi
+patch ada di `phase-4-human-only-patches.md`.
+
+---
 
 ### Urutan PreToolUse penting
 
