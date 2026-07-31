@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -219,6 +220,20 @@ func cmdLaunchTask(args []string) int {
 		return fail(exitError, "%v", err)
 	}
 	taskID := str(task, "task.id")
+
+	// Prasyarat platform diperiksa sebelum reservasi dan worktree disentuh
+	// (ADR-006 #3). Menolak lebih awal berarti tidak ada worktree yatim yang
+	// harus dibersihkan manual ketika runner-nya memang salah mesin.
+	//
+	// Ini kontrak yang ditolak, bukan runner yang rusak — karena itu
+	// exitViolation, bukan exitError.
+	if want := str(task, "execution.platform"); want != "" && want != "any" {
+		if want != runtime.GOOS {
+			return fail(exitViolation,
+				"%s menuntut platform %s, sedangkan runner berjalan pada %s",
+				taskID, want, runtime.GOOS)
+		}
+	}
 
 	// Worktree hanya dibuat bila reservasi sudah ada dan masih aktif.
 	// Urutan ini berasal dari Q13: validasi contract dan reservasi mendahului

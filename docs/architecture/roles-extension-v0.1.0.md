@@ -477,15 +477,32 @@ memuat referensi berkas dan konfigurasi dependency, sehingga masuk K4.
 
 ---
 
-## Prasyarat lingkungan yang belum tertangani
+## Prasyarat lingkungan — tertutup 31 Juli 2026
 
 `ios-developer` menuntut runner berjalan pada mesin macOS — `xcodebuild` tidak
-tersedia pada platform lain. Task contract belum memiliki cara menyatakan prasyarat
-platform.
+tersedia pada platform lain.
 
-Dicatat sebagai pekerjaan Phase 2 (§57) pada ADR-005 § Yang belum diputuskan.
-Sampai tersedia, penugasan task `ios-developer` bergantung pada operator yang
-memastikan runner-nya tepat — konvensi, bukan penegakan.
+**Tertutup oleh [ADR-006](../adr/ADR-006-agent-definition-baseline.md) #3.** Task
+contract kini memiliki field `execution.platform` (enum `any`, `darwin`, `linux`,
+default `any`). Runner memeriksanya pada `launch-task`, sesudah contract
+tervalidasi dan sebelum worktree dibuat; ketidakcocokan dengan `runtime.GOOS`
+menghasilkan `exit 2`.
+
+```yaml
+execution:
+  isolation: worktree
+  platform: darwin
+  max_turns: 30
+  timeout_minutes: 60
+```
+
+Penugasan task `ios-developer` karena itu tidak lagi bergantung pada operator yang
+memastikan runner-nya tepat — ia ditegakkan kode, bukan konvensi.
+
+**Yang masih konvensi:** hubungan role ⇄ platform belum ditegakkan. Task
+`ios-developer` yang lupa mencantumkan `darwin` akan berjalan pada runner mana pun
+dan gagal pada `quality_gates`, bukan pada `launch-task`. Dicatat ADR-006 §
+Yang belum diputuskan, dijadwalkan Phase 3 (§59).
 
 ---
 

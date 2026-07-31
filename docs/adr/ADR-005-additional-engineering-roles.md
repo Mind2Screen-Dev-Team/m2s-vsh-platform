@@ -130,19 +130,23 @@ diperlakukan sebagai amandemen baseline.
   prohibited, writable paths, dan definition of done.
   **Tertutup 31 Juli 2026** oleh `docs/architecture/roles-extension-v0.1.0.md`
   (§E1–§E4), yang memuat rincian setara berdasarkan materi dari pemilik arsitektur
-- **`ios-developer` menuntut runner bermesin macOS.** Belum ada mekanisme yang
-  menyatakan prasyarat platform pada task contract. Dicatat sebagai terbuka
+- **`ios-developer` menuntut runner bermesin macOS.** **Tertutup 31 Juli 2026**
+  oleh ADR-006 #3: field `execution.platform` pada task contract, ditegakkan
+  runner sebelum worktree dibuat
 - Daftar role terduplikasi pada `handoff.schema.json` (blok
   `implementation-complete`) karena `code-reviewer` harus terkecuali secara
   eksplisit. Dijaga `TestWriterRolesMustReportChanges` agar tidak menyimpang
 
 ### Yang belum diputuskan
 
-| Pertanyaan | Kapan |
+**Ketiganya tertutup 31 Juli 2026** oleh
+[ADR-006](ADR-006-agent-definition-baseline.md).
+
+| Pertanyaan | Resolusi |
 |---|---|
-| Bagaimana task menyatakan prasyarat platform runner, misal iOS wajib macOS? | Phase 2 (§57) |
-| Apakah `mobile-engineer` dan `android-developer` boleh aktif bersamaan pada satu repo? | Phase 2 (§57) |
-| Distribusi role per repository — Q10 hanya mencakup sembilan role lama | Phase 2 (§57) |
+| Bagaimana task menyatakan prasyarat platform runner, misal iOS wajib macOS? | ADR-006 #3 — field `execution.platform`, ditegakkan runner dengan `exit 2` |
+| Apakah `mobile-engineer` dan `android-developer` boleh aktif bersamaan pada satu repo? | ADR-006 #4 — boleh; isolasi dijamin reservasi path, bukan batas role |
+| Distribusi role per repository — Q10 hanya mencakup sembilan role lama | ADR-006 #5 — tabel distribusi 13 role per bentuk repository |
 
 ---
 

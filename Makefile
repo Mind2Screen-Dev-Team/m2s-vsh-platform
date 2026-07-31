@@ -92,9 +92,19 @@ verify-schemas:
 		| grep -E '^(--- )?(PASS|FAIL|ok)' || true
 	@echo "ok  schema terverifikasi"
 
+## verify-agents: pastikan 13 definisi agent lengkap dan boundary-nya berbeda
+##
+## Membuktikan kriteria Done §57. TestAgentBoundariesAreDistinct adalah
+## intinya: ia gagal bila dua role disalin-tempel tanpa dibedakan.
+.PHONY: verify-agents
+verify-agents:
+	go test ./internal/contract/ -run 'TestEveryRoleHasAgentTemplate|TestAgentFrontmatterFieldsAreSupported|TestAgentNameMatchesFileName|TestNoAgentHasAgentTool|TestReadOnlyRolesHaveNoWriteTools|TestWriterRolesDeclareWorktreeIsolation|TestForbiddenPathBaselinePresent|TestEveryRoleHasEffort|TestDeployedAgentsMatchTemplates|TestAgentBoundariesAreDistinct' -v 2>&1 \
+		| grep -E '^(--- )?(PASS|FAIL|ok)' || true
+	@echo "ok  13 definisi agent terverifikasi"
+
 ## verify: seluruh pemeriksaan — dipakai sebelum menutup fase
 .PHONY: verify
-verify: check verify-wrappers verify-schemas
+verify: check verify-wrappers verify-schemas verify-agents
 	@echo "ok  verifikasi lengkap"
 
 # ── Bantuan ───────────────────────────────────────────────────────────
