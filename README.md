@@ -36,18 +36,28 @@ hanya tersedia untuk repository public. Lihat `docs/decisions/capability-verific
 | Penghapusan branch diblokir | ✅ | ✅ | ✅ |
 | Wajib lewat pull request | ✅ | ✅ | — |
 | Conversation resolved | ✅ | ✅ | — |
-| Required status checks | ❌ Phase 4 (§60) | ❌ Phase 4 (§60) | — |
+| Required status checks | — human-only merge | 🟡 Phase 4 — siap dipasang | 🟡 siap dipasang |
 | 2 required approval | ❌ butuh identitas ke-2 | ❌ butuh identitas ke-2 | — |
-| Pembatasan siapa boleh push | ❌ **org-only** | ❌ **org-only** | ❌ |
+| CODEOWNERS (jejak audit) | 🟡 Phase 4 — PR menunggu merge | 🟡 idem | 🟡 idem |
+| `require_code_owner_review` | ❌ **sengaja mati** — owner tunggal = author PR | ❌ idem | ❌ idem |
+| Pembatasan siapa boleh push | 🟡 lewat **ruleset**, menunggu GitHub App | 🟡 idem | ❌ |
+| Merge queue | ❌ **org-only pada setiap plan** | ❌ idem | ❌ |
 
 Berlaku juga bagi admin (`enforce_admins`). Control repo sengaja tidak mewajibkan PR
 agar dokumen dapat di-commit langsung.
 
-⚠️ **Lapisan anti-overlap #7 dan #8 belum tertegakkan.** Tiga prasyarat ADR-001 belum
-terpenuhi; yang paling mengikat: pembatasan hak push hanya tersedia untuk repository
-milik **organization** — status public tidak mencukupi. Selama itu belum ada, larangan
-"implementer tidak merge PR sendiri" tetap soft rule. Lihat ADR-001 § Status
-penegakan dan **D-03**.
+⚠️ **Lapisan anti-overlap #7 dan #8 belum tertegakkan.** Larangan "implementer tidak
+merge PR sendiri" tetap soft rule sampai dua GitHub App
+(`m2s-worker`/`m2s-approver`, ADR-001 #5) dibuat dan ruleset dipasang. Lihat ADR-001
+§ Status penegakan dan **D-03**.
+
+✅ **Biaya D-03 terjawab (31 Juli 2026): plan Team tidak dibutuhkan.** Classic push
+restriction memang org-only, tetapi **repository ruleset** `restrict updates` dengan
+bypass list `Integration` (GitHub App) berlaku di repo akun personal — tanpa migrasi,
+tanpa biaya. Bila migrasi tetap dipilih, org plan **Free** sudah cukup untuk repo
+public. Satu-satunya fitur yang benar-benar menuntut organization adalah **merge
+queue**. Rincian dan perintah: [`docs/operator/branch-protection.md`](docs/operator/branch-protection.md),
+[ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #7.
 
 ---
 
@@ -62,15 +72,21 @@ docs/
   decisions/        decision log, open questions, risk register, hasil verifikasi
   system-analysis/  analisis sistem per requirement (owner: TL/SA)
 schemas/            JSON Schema untuk task, handoff, reservation, dll.
-templates/          template task contract, handoff, ADR, PR, review report
 templates/agents/   13 definisi role agent — sumber kanonik (human-only write)
+templates/github/   artefak GitHub kanonik — workflow CI, CODEOWNERS, PR template (§60)
 .claude/agents/     subset yang aktif di control repo: PM dan TL/SA (Q10)
+.github/workflows/  salinan workflow yang berlaku di control repo
 scripts/            wrapper tipis ke bin/m2s — pola scripts/<runner>.sh (Q11)
-cmd/m2s/            source runner: 5 subcommand (human-only write)
+cmd/m2s/            source runner: 7 subcommand (human-only write)
 internal/           pathmatch (deteksi overlap R-03), contract, registry
 Makefile            build & quality gate (human-only write)
-tests/              uji schema, uji overlap path, uji negatif enforcement
+tests/lib/          penegak yang dipakai bersama Makefile dan test negatif
+tests/negative/     uji negatif §68 — enforcement path, bentuk artefak GitHub
 ```
+
+Template task contract, handoff, ADR, dan review report **belum ada** (backlog P1/P6/P9
+`component-inventory.md`); yang tersedia sebagai rujukan bentuk sekarang adalah contoh
+valid di `schemas/examples/`.
 
 Binary `bin/m2s` **dibangun lokal dan tidak di-commit** (ADR-004 #5). Jalankan
 `make build` lebih dulu; wrapper akan menolak dengan pesan jelas bila belum ada.
@@ -78,7 +94,7 @@ Binary `bin/m2s` **dibangun lokal dan tidak di-commit** (ADR-004 #5). Jalankan
 ```bash
 make build     # kompilasi bin/m2s
 make check     # fmt + vet + test -race
-make verify    # check + wrapper tipis + schema RE2 + 13 definisi agent
+make verify    # check + wrapper tipis + schema RE2 + 13 definisi agent + hook + artefak GitHub
 ```
 
 ---
@@ -110,7 +126,7 @@ ditimpa ADR.
 | 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ✅ selesai |
 | 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ✅ selesai |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ✅ selesai |
-| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ⬜ |
+| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | 🟡 **selesai sebagian** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #8) |
 | 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |
 | 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ⬜ |

@@ -1,34 +1,35 @@
 # path-enforcement.yml — CI changed-path validation (§59), required check (§60).
 #
-# Ini salinan CONTROL REPO. Template kanonik ada di
-# `templates/github/workflows/path-enforcement.yml`; perubahan dimulai di sana,
-# lalu diturunkan ke sini dan ke repo aplikasi. `make verify-github` memeriksa
-# keduanya tetap sejalan pada aturan bentuk.
+# TEMPLATE KANONIK. Salin ke `.github/workflows/` pada repo aplikasi. Sumber
+# kebenaran ada di control repo; jangan sunting salinan di repo aplikasi.
 #
-# ── Koreksi Phase 4 ──────────────────────────────────────────────────────
+# Mengapa CI, bukan hanya hook: hook lokal dapat dilewati agent lewat Bash
+# (R-07) atau elakan blocklist (R-08). CI mengulang pemeriksaan yang sama pada
+# path yang benar-benar berubah di PR — tidak dapat dilewati agent lokal. Ini
+# otoritas final atas batas path (risk-register R-07: "CI adalah otoritas final").
 #
-# Versi Phase 3 dari berkas ini TIDAK PERNAH BERJALAN. Trigger-nya
-# `pull_request: branches: [develop, staging]`, sedangkan control repo hanya
-# punya `main` (open-questions §"Belum dikerjakan": control repo hanya punya
-# main; kebutuhan develop/staging belum diputuskan). `actions/runs`
-# mengembalikan total_count 0. Jadi klaim "CI live" pada Phase 3 tidak akurat:
-# berkasnya ada, jalurnya mati. Trigger diperbaiki ke `main` di bawah.
+# ── Dua aturan bentuk yang WAJIB dipertahankan (ADR-007 #2, #3) ──────────
 #
-# Job juga memakai `if:` level job, yang membuatnya tidak dapat dijadikan
-# required check — lihat aturan bentuk di template kanonik. Sudah dihapus.
+# 1. TIDAK ADA `if:` pada level job. Job yang di-skip GitHub tidak melaporkan
+#    status sama sekali. Sebagai required check, job ber-`if:` level job akan
+#    memblokir setiap PR yang tidak cocok — permanen, tanpa jalan keluar
+#    (ADR-001 § "tidak boleh diaktifkan lebih awal"). Ini gate palsu, kerabat
+#    R-24. Pemilahan branch dilakukan di DALAM step, bukan oleh `if:` job.
+#    Dijaga otomatis: `make verify-github`.
 #
-# ── Perilaku di control repo ─────────────────────────────────────────────
+# 2. Trigger `merge_group` wajib ada. Tanpa itu, required check tidak pernah
+#    melapor saat PR masuk merge queue dan merge gagal selamanya. Merge queue
+#    sendiri belum aktif (org-only, ADR-007 #3) — trigger dipasang sekarang
+#    supaya aktivasi nanti tidak menuntut perubahan workflow.
 #
-# Branch di control repo adalah `worktree-*` per fase, bukan `agent/*`, dan
-# tidak punya task contract. Jadi mode `non-agent` adalah jalur normal di sini:
-# job melapor SUKSES dengan pesan eksplisit. Itulah buktinya bahwa job ini
-# aman dijadikan required check — ia melapor, bukan di-skip.
+# Nama job `validate-changed-paths` ADALAH nama required check. Mengubahnya
+# memutus branch protection yang sudah terpasang.
 
 name: path-enforcement
 
 on:
   pull_request:
-    branches: [main]
+    branches: [develop, staging]
   merge_group:
 
 # Read-only: workflow ini hanya memvalidasi, tidak menulis apa pun ke repo.
@@ -39,8 +40,10 @@ jobs:
   validate-changed-paths:
     runs-on: ubuntu-latest
     steps:
-      # Selalu jalan. Nama branch masuk lewat `env`, bukan interpolasi ${{ }}
-      # ke dalam shell — nama branch adalah input tak terpercaya.
+      # Selalu jalan. Menentukan lingkup, tidak pernah di-skip, sehingga job
+      # selalu melaporkan status. Nama branch masuk lewat `env`, bukan
+      # interpolasi ${{ }} ke dalam shell — nama branch adalah input tak
+      # terpercaya dan dapat memuat metakarakter shell.
       - name: Tentukan lingkup pemeriksaan
         id: scope
         env:
@@ -49,6 +52,10 @@ jobs:
         run: |
           set -u
           if [ "$EVENT_NAME" = "merge_group" ]; then
+            # Batas yang diketahui: payload merge_group tidak memuat nama
+            # branch asal, sehingga task-id tak dapat diturunkan. Validasi
+            # path sudah dijalankan pada event pull_request untuk commit yang
+            # sama. Di sini kami melapor sukses supaya queue tidak deadlock.
             echo "mode=merge-group" >> "$GITHUB_OUTPUT"
             echo "task_id=" >> "$GITHUB_OUTPUT"
             exit 0
@@ -57,12 +64,15 @@ jobs:
           case "$HEAD_REF" in
             agent/*) ;;
             *)
+              # PR manusia atau branch non-agent: tidak ada contract, tidak
+              # ada yang divalidasi. Lolos EKSPLISIT — bukan skip.
               echo "mode=non-agent" >> "$GITHUB_OUTPUT"
               echo "task_id=" >> "$GITHUB_OUTPUT"
               exit 0
               ;;
           esac
 
+          # Branch mengaku agent/*: pola §44 wajib dipenuhi.
           task_id=$(printf '%s' "$HEAD_REF" \
             | sed -n 's#^agent/\([A-Z][A-Z0-9]*-[0-9]\{1,\}\)-.*#\1#p')
           if [ -z "$task_id" ]; then
@@ -79,18 +89,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout control repo
+        if: steps.scope.outputs.mode == 'agent'
+        uses: actions/checkout@v4
+        with:
+          repository: fajarcandraaa/m2s-vsh-platform
+          path: .control
+          fetch-depth: 1
+
       - name: Setup Go
         if: steps.scope.outputs.mode == 'agent'
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: .control/go.mod
 
       - name: Bangun runner
         if: steps.scope.outputs.mode == 'agent'
+        working-directory: .control
         run: make build
 
-      # Di control repo, contract berada di repo yang sama — tidak perlu
-      # checkout kedua seperti pada template repo aplikasi.
       - name: Validasi changed path terhadap contract
         if: steps.scope.outputs.mode == 'agent'
         env:
@@ -98,16 +115,19 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: |
           set -u
-          contract="control/tasks/specifications/${TASK_ID}.yaml"
+          contract=".control/control/tasks/specifications/${TASK_ID}.yaml"
           if [ ! -f "$contract" ]; then
-            echo "::error::contract $contract tidak ditemukan"
+            echo "::error::contract $contract tidak ditemukan di control repo"
             exit 1
           fi
+          # Path yang berubah relatif base branch PR.
           git diff --name-only "origin/${BASE_REF}...HEAD" > changed.txt
           echo "changed files:"; cat changed.txt
           # exit 2 = pelanggaran batas path (cmd/m2s/main.go exitViolation).
-          ./bin/m2s validate-changed-paths -contract "$contract" -changed changed.txt
+          .control/bin/m2s validate-changed-paths -contract "$contract" -changed changed.txt
 
+      # Selalu jalan, termasuk ketika step di atas gagal. Membuat kesimpulan
+      # job terbaca manusia dan memastikan ada keluaran pada setiap jalur.
       - name: Ringkasan
         if: always()
         env:
