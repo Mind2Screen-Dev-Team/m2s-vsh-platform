@@ -5,6 +5,21 @@
 template, repository rulesets sebagai pengganti classic push restriction, dan
 batas yang masih terbuka (D-02, D-03).
 
+> **STATUS 1 Agustus 2026 — SUDAH TERPASANG DAN TERBUKTI.**
+> Required check `validate-changed-paths` (app_id 15368) aktif di `develop` dan
+> `staging` pada `m2s-vsh-project-backend` dan `-frontend`. `main` sengaja tidak
+> disentuh — merge ke `main` sepenuhnya milik manusia (ADR-001 #2).
+>
+> **Diuji dengan PR nyata** (backend PR #4, branch `test/required-check-probe`,
+> bukan `agent/*`): hasil `mergeStateStatus: CLEAN`,
+> `validate-changed-paths=SUCCESS`. Membuktikan job **melapor**, bukan di-skip,
+> sehingga PR manusia tidak terkunci. Bila bentuk Phase 3 (`if:` level job) yang
+> dipakai, PR itu akan menggantung *"Expected — Waiting for status to be
+> reported"* selamanya. PR uji sudah ditutup dan branch-nya dihapus.
+>
+> `required_approving_review_count` tetap `0` dan `require_code_owner_reviews`
+> tetap `false` — sengaja, lihat Perangkap 2.
+
 Dokumen ini menjelaskan cara memasang lapis penegakan di sisi GitHub, urutan yang
 wajib diikuti, dan tiga cara mengunci repo secara permanen bila urutannya
 dilanggar. Ia untuk **operator manusia**, bukan agent — seluruh aksi di sini
