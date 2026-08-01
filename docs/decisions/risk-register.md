@@ -331,15 +331,45 @@ Audit hook mencatat tool call, berpotensi merekam argumen yang memuat secret.
 **Mitigasi:** redaksi pada `audit-tool-use.sh`; hook secret-path berjalan **sebelum**
 audit.
 
+**Lapisan tambahan yang ternyata sudah ada (ditemukan Phase 4, 2026-08-01):**
+**GitGuardian** (`app_id: 46505`) aktif sebagai check-run — terlihat di PR #3 control
+repo sebagai *"GitGuardian Security Checks"*, `conclusion: success`. Ia **tidak pernah
+tercatat** di dokumen mana pun sebelum ini, sehingga tak ada yang mengetahui cakupan
+maupun batasnya.
+
+**Cakupan — dikoreksi pada hari yang sama.** Pemeriksaan pertama menyimpulkan
+GitGuardian tidak aktif di repo aplikasi (nol check-run). Itu keliru: angka nol
+muncul karena kedua repo **belum pernah punya PR sama sekali**, bukan karena aplikasi
+tidak terpasang. Setelah enam PR distribusi dibuka, GitGuardian melapor `success` pada
+**seluruh enam** PR di `m2s-vsh-project-backend` dan `-frontend`. Cakupannya merata.
+
+Pelajaran metodologis: ketiadaan sinyal bukan bukti ketiadaan lapisan. Ukur pada
+kondisi yang memang memicunya.
+
+**Batas yang tetap berlaku:** GitGuardian memindai isi commit, bukan `.task/audit.log`,
+sehingga ia **bukan** pengganti mitigasi R-25 di atas. Ia juga bukan required check —
+statusnya dilaporkan tetapi tidak menahan merge sampai didaftarkan.
+
 ---
 
-### R-26 🟢 Sisa worktree
+### R-26 🟠 Sisa worktree — **mitigasi belum berjalan**
 
 §45 menuntut uncommitted changes dilaporkan sebelum cleanup.
 
-**Mitigasi:** `worktree-lifecycle.sh` menyimpan hasil sebelum cleanup dan **tidak
-pernah** menyalin secret (§42.6). `WorktreeCreate` membatalkan pembuatan pada
-**setiap** exit non-zero — cocok sebagai guard secret.
+**Mitigasi yang dirancang:** `worktree-lifecycle.sh` menyimpan hasil sebelum cleanup
+dan **tidak pernah** menyalin secret (§42.6). `WorktreeCreate` membatalkan pembuatan
+pada **setiap** exit non-zero — cocok sebagai guard secret.
+
+🔴 **Diturunkan dari 🟢 ke 🟠 pada 2026-08-01 (Phase 4, temuan T-04).** Mitigasi di
+atas **tidak berjalan**: `worktree-lifecycle.sh` ada di disk, executable, self-test
+lulus, dan diverifikasi `Makefile:115` — tetapi **tidak terdaftar di
+`.claude/settings.json`**. Event yang terdaftar hanya `PreToolUse`, `PostToolUse`,
+`SubagentStop`; tidak ada `WorktreeCreate`/`WorktreeRemove`. Hook tidak pernah
+dipanggil runtime.
+
+Empat dokumen menyatakannya aktif dan keliru: `hook-enforcement.md:42` ("fail-closed"),
+`component-inventory.md:203`, register ini sendiri, dan `open-questions.md` V-05
+("guard secret terpasang"). Lihat **T-04**.
 
 ---
 

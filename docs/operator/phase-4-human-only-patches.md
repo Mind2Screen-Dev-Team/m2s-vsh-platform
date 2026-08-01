@@ -119,24 +119,72 @@ Write .github/workflows/path-enforcement.yml
 
 ---
 
-## 3. Opsional — `worktree-lifecycle.sh` tidak terdaftar
+## 3. `worktree-lifecycle.sh` tidak terdaftar — **T-04, bukan lagi opsional**
 
-Temuan sampingan, bukan bagian §60. `Makefile:115` memverifikasi self-test
-`worktree-lifecycle.sh` dan `verify-hooks` melaporkannya lulus, tetapi hook itu
-**tidak punya entri** di `.claude/settings.json` — hanya empat matcher terdaftar
-(PreToolUse ×3, PostToolUse ×1) plus SubagentStop.
+**Diperbarui 1 Agustus 2026** setelah penyelidikan. Semula dicatat sebagai temuan
+sampingan; buktinya kini cukup untuk menyebutnya **kelalaian, bukan keputusan**.
 
-Jadi `verify-hooks` memvalidasi hook yang tidak terpasang. Self-test-nya hijau,
-tetapi tidak ada yang memanggilnya saat runtime. Ini gate palsu dengan bentuk
-berbeda dari yang ditangani ADR-007 #2: bukan status yang tak terlapor, melainkan
-penjaga yang tidak pernah dipanggil.
+Keadaan: `Makefile:115` memverifikasi self-test dan `verify-hooks` melaporkannya
+lulus, tetapi hook **tidak punya entri** di `.claude/settings.json`. Event terdaftar
+hanya `PreToolUse`, `PostToolUse`, `SubagentStop`.
 
-Dua jalan, keduanya menuntut keputusan manusia:
+Yang membuatnya kelalaian, bukan pilihan sadar:
 
-- **daftarkan** hook pada event `WorktreeCreate`/`WorktreeRemove` — bila §42.6 memang
-  menuntutnya aktif;
-- **catat sebagai sengaja tidak terpasang** di `docs/operator/hook-enforcement.md`,
-  supaya pembaca berikutnya tidak menyimpulkan ia aktif.
+| Bukti | Isi |
+|---|---|
+| `Architecture.md:2085` §42.6 | menuntut worktree hook untuk *"menghindari secret copy"* dan *"menyimpan result sebelum cleanup"* |
+| `capability-verification.md:69` | `WorktreeCreate`, `WorktreeRemove` sudah diverifikasi **tersedia** ✅ |
+| `hook-enforcement.md:42` | menyatakan hook ini **"fail-closed"** — klaim yang tidak akurat |
+| `component-inventory.md:203` | mendaftarkannya sebagai komponen fail-closed |
+| `risk-register.md:340` | menjadikannya **mitigasi R-26** |
+| `open-questions.md` V-05 | menyatakan *"guard secret terpasang"* |
 
-Sampai salah satu diambil, jangan membaca baris `ok worktree-lifecycle self-test
-lulus` pada keluaran `make verify` sebagai bukti hook itu berjalan.
+Lima dokumen menyatakannya aktif. **Nol** dokumen menyatakan ia sengaja dimatikan.
+Hook-nya sendiri ditulis lengkap dengan penanganan kedua event dan self-test empat
+kasus — bukan kerangka yang ditinggalkan setengah jalan.
+
+Tambahkan ke `hooks` di `.claude/settings.json`:
+
+```json
+"WorktreeCreate": [
+  {
+    "matcher": "*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-lifecycle.sh"
+      }
+    ]
+  }
+],
+"WorktreeRemove": [
+  {
+    "matcher": "*",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/worktree-lifecycle.sh"
+      }
+    ]
+  }
+]
+```
+
+Samakan bentuk `command` dengan lima entri yang sudah ada — periksa apakah mereka
+memakai `$CLAUDE_PROJECT_DIR` atau path relatif, lalu ikuti.
+
+⚠️ **Perhatikan sebelum menerapkan:** `WorktreeCreate` membatalkan pembuatan pada
+**setiap** exit non-zero (`capability-verification.md:95`) — bukan hanya exit 2. Hook
+ini `set -euo pipefail`, jadi bug apa pun di dalamnya akan memblokir pembuatan
+worktree. Uji sekali sesudah memasang:
+
+```bash
+bash .claude/hooks/worktree-lifecycle.sh --selftest   # harus lulus
+# lalu buat satu worktree percobaan dan pastikan tidak terblokir
+```
+
+Bila memilih **tidak** memasangnya, koreksi lima dokumen di tabel atas supaya tidak
+ada lagi yang mengklaim mitigasi yang tidak berjalan. Sebagian sudah kukoreksi
+(`hook-enforcement.md`, `component-inventory.md`, `risk-register.md`,
+`open-questions.md`) menjadi "tidak terpasang" — bila kamu memasangnya, kembalikan
+keempatnya ke status aktif.

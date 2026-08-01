@@ -200,7 +200,7 @@ memiliki version + owner + evaluation cases (§39).
 | `block-secret-paths.sh` | PreToolUse | **fail-closed** |
 | `audit-tool-use.sh` | PostToolUse | fail-open (audit), wajib redaksi secret |
 | `validate-handoff.sh` | SubagentStop | **fail-closed** |
-| `worktree-lifecycle.sh` | WorktreeCreate/Remove | **fail-closed** (setiap non-zero membatalkan) |
+| `worktree-lifecycle.sh` | WorktreeCreate/Remove | ⚠️ **tidak terdaftar di settings.json** (T-04, 2026-08-01) — dirancang fail-closed, tetapi belum dipanggil runtime |
 
 **Wajib:** `exit 2`, bukan `exit 1` — `exit 1` tidak memblokir apa pun (T-01).
 Setiap hook memeriksa dependensinya di awal dan memiliki self-test.
