@@ -52,7 +52,9 @@ if [[ "$M2S_APP_KEY_PATH" == *.age ]]; then
   KEY_FILE="$(mktemp "${TMPDIR:-/tmp}/m2s-key.XXXXXX")"
   chmod 600 "$KEY_FILE"
   trap 'rm -f "$KEY_FILE"' EXIT
-  printf '%s\n' "$M2S_APP_KEY_PASS" | age -d -i - -o "$KEY_FILE" "$M2S_APP_KEY_PATH" 2>/dev/null \
+  # age -d membaca passphrase dari stdin; JANGAN pakai -i (itu identity file,
+  # bukan passphrase) — akan selalu gagal.
+  printf '%s\n' "$M2S_APP_KEY_PASS" | age -d -o "$KEY_FILE" "$M2S_APP_KEY_PATH" 2>/dev/null \
     || { echo "Gagal decrypt kunci — cek M2S_APP_KEY_PASS." >&2; exit 1; }
 fi
 
