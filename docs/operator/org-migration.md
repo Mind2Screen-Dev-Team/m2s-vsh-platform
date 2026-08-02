@@ -266,6 +266,7 @@ develop+staging) berlaku di:
   branch yang dilindungi).
 
 Verifikasi konsistensi di agent docs + `open-questions.md` V-10 / V-09.
+Ringkasan posisi final + sisa checklist: `docs/operator/status-adr001-five-complete.md`.
 
 ---
 

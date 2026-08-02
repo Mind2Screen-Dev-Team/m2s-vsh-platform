@@ -35,6 +35,7 @@ batas yang masih terbuka (D-02, D-03).
 > `docs/operator/org-migration.md` §Langkah ADR-001 #5. **§66 #9 TERUJI
 > 2 Agustus 2026**: merge PR worker ditolak (`405 Repository rule violations`,
 > required check failing). ADR-001 #5 efektif.
+> **Posisi final lengkap**: `docs/operator/status-adr001-five-complete.md`.
 
 Dokumen ini menjelaskan cara memasang lapis penegakan di sisi GitHub, urutan yang
 wajib diikuti, dan tiga cara mengunci repo secara permanen bila urutannya
