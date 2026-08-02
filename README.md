@@ -36,9 +36,9 @@ hanya tersedia untuk repository public. Lihat `docs/decisions/capability-verific
 | Penghapusan branch diblokir | ✅ | ✅ | ✅ |
 | Wajib lewat pull request | ✅ | ✅ | — |
 | Conversation resolved | ✅ | ✅ | — |
-| Required status checks | — human-only merge | 🟡 Phase 4 — siap dipasang | 🟡 siap dipasang |
+| Required status checks | — human-only merge | ✅ **aktif** `validate-changed-paths` | 🟡 siap dipasang |
 | 2 required approval | ❌ butuh identitas ke-2 | ❌ butuh identitas ke-2 | — |
-| CODEOWNERS (jejak audit) | 🟡 Phase 4 — PR menunggu merge | 🟡 idem | 🟡 idem |
+| CODEOWNERS (jejak audit) | ✅ **aktif** di develop/staging/main | ✅ idem | 🟡 idem |
 | `require_code_owner_review` | ❌ **sengaja mati** — owner tunggal = author PR | ❌ idem | ❌ idem |
 | Pembatasan siapa boleh push | 🟡 lewat **ruleset**, menunggu GitHub App | 🟡 idem | ❌ |
 | Merge queue | ❌ **org-only pada setiap plan** | ❌ idem | ❌ |
