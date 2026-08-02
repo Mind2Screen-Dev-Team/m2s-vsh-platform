@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fajarcandraaa/m2s-vsh-platform/internal/contract"
-	"github.com/fajarcandraaa/m2s-vsh-platform/internal/registry"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/contract"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/registry"
 )
 
 const lockTimeout = 30 * time.Second

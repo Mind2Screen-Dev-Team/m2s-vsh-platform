@@ -93,7 +93,7 @@ jobs:
         if: steps.scope.outputs.mode == 'agent'
         uses: actions/checkout@v4
         with:
-          repository: fajarcandraaa/m2s-vsh-platform
+          repository: Mind2Screen-Dev-Team/m2s-vsh-platform
           path: .control
           fetch-depth: 1
 
