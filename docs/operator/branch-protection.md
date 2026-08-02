@@ -19,6 +19,13 @@ batas yang masih terbuka (D-02, D-03).
 >
 > `required_approving_review_count` tetap `0` dan `require_code_owner_reviews`
 > tetap `false` — sengaja, lihat Perangkap 2.
+>
+> **STATUS 2 Agustus 2026 — pasca migrasi org (ADR-008).** Repo kini di
+> `Mind2Screen-Dev-Team`; proteksi `validate-changed-paths` **ikut** transfer dan
+> GitGuardian **ikut** (check-run `GitGuardian Security Checks`, app `gitguardian`,
+> `conclusion: success`, SHA `39ab5f2`). Rulesets (push restriction per App) belum
+> dipasang — menunggu dua GitHub App dibuat (manusia, UI). Lihat
+> `docs/operator/org-migration.md` §Langkah ADR-001 #5.
 
 Dokumen ini menjelaskan cara memasang lapis penegakan di sisi GitHub, urutan yang
 wajib diikuti, dan tiga cara mengunci repo secara permanen bila urutannya
@@ -79,7 +86,7 @@ make verify-github
 Memeriksa manual bahwa suatu PR memang melapor, bukan di-skip:
 
 ```bash
-gh api "repos/fajarcandraaa/<repo>/commits/<sha>/check-runs" \
+gh api "repos/Mind2Screen-Dev-Team/<repo>/commits/<sha>/check-runs" \
   --jq '.check_runs[] | {name, status, conclusion}'
 ```
 
@@ -173,10 +180,10 @@ gh auth refresh -s workflow
 
 ```bash
 # Sebelum Phase 4 angka ini 0 di ketiga repo — berkas ada, jalurnya mati.
-gh api "repos/fajarcandraaa/<repo>/actions/runs" --jq '.total_count'
+gh api "repos/Mind2Screen-Dev-Team/<repo>/actions/runs" --jq '.total_count'
 
 # Lima run terakhir.
-gh api "repos/fajarcandraaa/<repo>/actions/runs" \
+gh api "repos/Mind2Screen-Dev-Team/<repo>/actions/runs" \
   --jq '.workflow_runs[0:5][] | {name, event, head_branch, conclusion}'
 ```
 
@@ -190,7 +197,7 @@ Nama context = nama job = `validate-changed-paths`.
 ```bash
 for repo in m2s-vsh-project-backend m2s-vsh-project-frontend; do
   for branch in develop staging; do
-    gh api -X PUT "repos/fajarcandraaa/$repo/branches/$branch/protection" \
+    gh api -X PUT "repos/Mind2Screen-Dev-Team/$repo/branches/$branch/protection" \
       --input - <<'JSON'
 {
   "required_status_checks": {
@@ -228,7 +235,7 @@ Catatan pada payload:
 Verifikasi:
 
 ```bash
-gh api "repos/fajarcandraaa/<repo>/branches/develop/protection" \
+gh api "repos/Mind2Screen-Dev-Team/<repo>/branches/develop/protection" \
   --jq '{checks: .required_status_checks.contexts,
          approvals: .required_pull_request_reviews.required_approving_review_count,
          admins: .enforce_admins.enabled}'
@@ -241,7 +248,7 @@ gh api "repos/fajarcandraaa/<repo>/branches/develop/protection" \
 Classic protection menolak pembatasan hak di repo akun personal:
 
 ```
-PUT /repos/fajarcandraaa/<repo>/branches/main/protection
+PUT /repos/Mind2Screen-Dev-Team/<repo>/branches/main/protection
 422 Only organization repositories can have users and team restrictions
 ```
 
@@ -274,19 +281,21 @@ sebagaimana ADR-001 #5 merancangnya (GitHub App, bukan machine user) karena itu
 **menuntut migrasi ke organization** — bukan karena push restriction, melainkan karena
 bypass actor.
 
-Yang **bisa** dilakukan sekarang tanpa migrasi: mengunci `develop`/`staging` dengan
-`restrict updates` dan memberi bypass kepada identitas **manusia** dengan
-`bypass_mode: pull_request`. Itu menahan seluruh push langsung termasuk milik pemilik
-repo — lebih kuat dari classic protection, tetapi belum memisahkan worker dari
-approver.
+**Koreksi 2 Agustus 2026.** Bila dilakukan sekarang, gunakan bentuk org (ADR-008):
+repo sudah di `Mind2Screen-Dev-Team`, sehingga bypass `actor_type: Integration`
+(GitHub App) legal dan model `m2s-worker`/`m2s-approver` dapat dipisahkan.
+Payload kanonik ada di `templates/github/rulesets/`, pemasang di
+`tools/apply-rulesets.sh` (manusia, admin org). Bentuk `User`-bypass di bawah
+adalah jembatan lama yang hanya relevan saat repo masih akun personal.
 
 ```bash
-# Lihat ruleset yang ada (0 di ketiga repo pilot per 1 Agustus 2026).
-gh api "repos/fajarcandraaa/<repo>/rulesets" --jq 'length'
+# Lihat ruleset yang ada (0 di ketiga repo per 1 Agustus 2026).
+gh api "repos/Mind2Screen-Dev-Team/<repo>/rulesets" --jq 'length'
 
-# Kunci develop/staging; hanya bypass yang tercantum boleh mengubahnya.
-# Ganti actor_id dengan hasil `gh api user --jq .id`.
-gh api -X POST "repos/fajarcandraaa/<repo>/rulesets" --input - <<'JSON'
+# Bentuk org — kunci develop/staging; hanya m2s-approver yang boleh merge lewat
+# PR (bypass_mode: pull_request memisahkan hak merge dari push langsung).
+# <APP_ID> = app_id App m2s-approver.
+gh api -X POST "repos/Mind2Screen-Dev-Team/<repo>/rulesets" --input - <<'JSON'
 {
   "name": "agent-push-restriction",
   "target": "branch",
@@ -296,16 +305,17 @@ gh api -X POST "repos/fajarcandraaa/<repo>/rulesets" --input - <<'JSON'
   },
   "rules": [{ "type": "update" }],
   "bypass_actors": [
-    { "actor_type": "User", "actor_id": 0, "bypass_mode": "pull_request" }
+    { "actor_type": "Integration", "actor_id": <APP_ID>, "bypass_mode": "pull_request" },
+    { "actor_type": "OrganizationAdmin", "actor_id": null, "bypass_mode": "pull_request" }
   ]
 }
 JSON
 ```
 
 **Uji di repo sekali-pakai lebih dulu.** Repo probe
-`fajarcandraaa/m2s-vsh-rules-probe` sengaja dibiarkan hidup dengan ruleset aktif;
+`fajarcandraaa/m2s-vsh-rules-probe` (masih di akun personal) sengaja dibiarkan hidup dengan ruleset aktif;
 bypass picker UI dapat diperiksa di
-`https://github.com/fajarcandraaa/m2s-vsh-rules-probe/rules/20155906`. Hapus repo itu
+`https://github.com/Mind2Screen-Dev-Team/m2s-vsh-rules-probe/rules/20155906`. Hapus repo itu
 bila sudah tidak diperlukan.
 
 ---
@@ -316,7 +326,7 @@ bila sudah tidak diperlukan.
 Perangkap 1. Required check terdaftar tetapi job-nya di-skip. Periksa:
 
 ```bash
-gh api "repos/fajarcandraaa/<repo>/commits/<sha>/check-runs" \
+gh api "repos/Mind2Screen-Dev-Team/<repo>/commits/<sha>/check-runs" \
   --jq '.check_runs[] | {name, conclusion}'
 ```
 
@@ -339,7 +349,7 @@ Periksa trigger cocok dengan branch yang benar-benar ada. Ini kegagalan Phase 3:
 `branches: [develop, staging]` di control repo yang hanya punya `main`.
 
 ```bash
-gh api "repos/fajarcandraaa/<repo>/branches" --jq '.[].name'
+gh api "repos/Mind2Screen-Dev-Team/<repo>/branches" --jq '.[].name'
 ```
 
 ---
@@ -351,7 +361,7 @@ gh api "repos/fajarcandraaa/<repo>/branches" --jq '.[].name'
 | Merge queue tidak tersedia | org-only pada setiap plan | mitigasi overlap semantik (§29.8, R-01) bersandar reservasi + urutan merge TL/SA (§46) |
 | `required_approving_review_count: 0` | satu kolaborator, larangan self-approval | §66 #9 tidak dapat diuji; ADR-001 belum berlaku efektif |
 | `require_code_owner_review` mati | owner tunggal = author PR | CODEOWNERS memberi jejak audit, bukan gate |
-| Push restriction belum terpasang | menunggu GitHub App | agent yang membuka PR masih dapat me-merge PR-nya sendiri |
+| Push restriction (ruleset per App) belum terpasang | menunggu dua GitHub App dibuat (UI manusia) | agent yang membuka PR masih dapat me-merge PR-nya sendiri sampai ruleset aktif. Jalur sudah siap: `templates/github/rulesets/` + `tools/apply-rulesets.sh` (ADR-008 §Langkah ADR-001 #5) |
 | Jalur `merge_group` melapor sukses tanpa validasi ulang | payload tidak memuat branch asal | aman selama merge queue mati; tinjau saat diaktifkan |
 | Repo klien private tanpa enforcement | D-02 | satu-satunya hal yang benar-benar menuntut plan Team |
 | Artefak ada di dua tempat | kanonik + salinan repo aplikasi | `verify-github` memeriksa bentuk, bukan kesamaan byte |

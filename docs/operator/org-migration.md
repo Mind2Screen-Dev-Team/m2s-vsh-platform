@@ -170,35 +170,31 @@ sebelum satu run hijau di lokasi baru.
 ## Langkah ADR-001 #5 — dua GitHub App (setelah org aktif)
 
 **Ini keputusan yang memakai `admin:org`.** Token agent tidak punya scope itu.
+**Membuat App tidak punya REST endpoint** — dilakukan lewat UI oleh manusia,
+sehingga langkah 1 dan 3 di bawah adalah aksi manusia, bukan agent.
 
 1. Buat App `m2s-worker` dan `m2s-approver` di:
    `https://github.com/organizations/Mind2Screen-Dev-Team/settings/apps/new`
    - Hak minimal: `Contents: Read & Write`, `Pull requests: Read & Write`
    - Izinkan hanya 3 repo yang relevan (control, backend, frontend)
-   - Catat `app_id` tiap App
+   - Unduh **private key** masing-masing App saat dibuat; simpan di luar repo
+     (mis. `~/.claude/secrets/`). Kunci `m2s-approver` adalah aset bernilai
+     tinggi (ADR-001) — jangan commit ke mana pun.
+   - Catat `app_id` tiap App. Dapat dibaca ulang via API setelah lahir:
+     `gh api apps/<slug> --jq .id` (slug `m2s-worker` / `m2s-approver`).
 2. Pasang ruleset per App. Bypass `actor_type: Integration` kini **legal** di org
-   (V-08 hanya berlaku repo personal). Contoh untuk `m2s-approver`:
+   (V-08 hanya berlaku repo personal). Payload kanonik ada di
+   `templates/github/rulesets/`, pemasang di `tools/apply-rulesets.sh`:
+   - `agent-push-restriction-approver.json` — bypass `Integration` App
+     `m2s-approver` (`bypass_mode: pull_request`), kunci develop/staging;
+     hanya App approver yang boleh merge lewat PR.
+   - `agent-worker-restriction.json` — bypass hanya manusia `OrganizationAdmin`;
+     worker tak boleh mengubah develop/staging, hanya push `agent/*` + buka PR.
 
 ```bash
-# <APP_ID> = id App m2s-approver. Kunci develop/staging; hanya App yang boleh ubah.
-gh api -X POST repos/Mind2Screen-Dev-Team/m2s-vsh-project-backend/rulesets --input - <<'JSON'
-{
-  "name": "agent-push-restriction",
-  "target": "branch",
-  "enforcement": "active",
-  "conditions": {
-    "ref_name": { "include": ["refs/heads/develop", "refs/heads/staging"], "exclude": [] }
-  },
-  "rules": [{ "type": "update" }],
-  "bypass_actors": [
-    { "actor_type": "Integration", "actor_id": <APP_ID>, "bypass_mode": "pull_request" }
-  ]
-}
-JSON
+# <APP_ID> = id App m2s-approver.
+M2S_APPROVER_ID=<APP_ID> tools/apply-rulesets.sh
 ```
-
-   Untuk `m2s-worker`: **jangan** masukkan ke bypass — worker tak boleh mengubah
-   develop/staging. Ia hanya push `agent/*` + buka PR.
 
 3. **Verifikasi §66 #9** (Implementer tidak merge PR sendiri): worker App buka PR,
    coba merge → harus ditolak. Ini momen pertama acceptance itu teruji.
