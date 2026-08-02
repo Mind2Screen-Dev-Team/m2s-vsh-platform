@@ -26,8 +26,9 @@ batas yang masih terbuka (D-02, D-03).
 > `conclusion: success`, SHA `39ab5f2`). Dua GitHub App (`m2s-worker` 4461216,
 > `m2s-approver` 4461262) dibuat + ruleset per App **terpasang** (bypass
 > `Integration` approver, `OrganizationAdmin` untuk worker) — lihat
-> `docs/operator/org-migration.md` §Langkah ADR-001 #5. §66 #9 menunggu uji
-> aktual (worker merge → ditolak).
+> `docs/operator/org-migration.md` §Langkah ADR-001 #5. **§66 #9 TERUJI
+> 2 Agustus 2026**: merge PR worker ditolak (`405 Repository rule violations`,
+> required check failing). ADR-001 #5 efektif.
 
 Dokumen ini menjelaskan cara memasang lapis penegakan di sisi GitHub, urutan yang
 wajib diikuti, dan tiga cara mengunci repo secara permanen bila urutannya

@@ -215,6 +215,13 @@ gh api repos/Mind2Screen-Dev-Team/<repo>/rulesets/<id> --jq '{name, bypass_actor
    Bila merge worker gagal `GH013`/auth dan push langsung worker ke
    develop/staging ditolak, acceptance **terbukti**.
 
+   **TERBUKTI 2 Agustus 2026** — uji nyata: PR #5 backend
+   (`m2s-vsh-project-backend`, branch `agent/merge-probe`) dibuka sebagai
+   `m2s-worker[bot]`, coba merge squash sebagai worker → **ditolak**:
+   `405 Repository rule violations found / Cannot update this protected ref. /
+   Required status check "validate-changed-paths" is failing.` PR ditutup,
+   branch dihapus. Worker tidak dapat merge PR-nya sendiri (ADR-001 #5 efektif).
+
 ---
 
 ## Rollback
