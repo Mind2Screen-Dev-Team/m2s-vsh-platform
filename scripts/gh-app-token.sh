@@ -10,7 +10,11 @@
 # Berkas ini TIDAK menyimpan kunci. Ia hanya membaca dari environment:
 #
 #   M2S_APP_ID           app_id App (halaman general App di GitHub).
-#   M2S_APP_KEY_PATH     path ke private key App (unduh saat App dibuat).
+#   M2S_APP_KEY_PATH     path ke private key App. Menerima plaintext `.pem`
+#                        atau `.pem.age` (enkripsi age — lihat operator runbook).
+#   M2S_APP_KEY_PASS     passphrase bila M2S_APP_KEY_PATH adalah `.pem.age`.
+#                        Tidak boleh dari argumen; baca dari env, jangan tulis
+#                        ke disk.
 #   M2S_APP_INSTALL_ID   installation id (halaman App -> Install). Opsional,
 #                        dibaca dari /app/installations/{id} bila tidak diberi.
 #
@@ -36,6 +40,22 @@ if ! command -v openssl >/dev/null 2>&1; then
   exit 1
 fi
 
+# -- Kunci terenkripsi age (.pem.age): decrypt ke temp, hapus saat keluar.
+#    Passphrase hanya lewat stdin (age -d), tidak pernah muncul di ps/history.
+KEY_FILE="$M2S_APP_KEY_PATH"
+if [[ "$M2S_APP_KEY_PATH" == *.age ]]; then
+  if ! command -v age >/dev/null 2>&1; then
+    echo "Kunci adalah .pem.age tetapi age tidak ditemukan." >&2
+    exit 1
+  fi
+  : "${M2S_APP_KEY_PASS:?M2S_APP_KEY_PASS tidak di-set — kunci .pem.age butuh passphrase.}"
+  KEY_FILE="$(mktemp "${TMPDIR:-/tmp}/m2s-key.XXXXXX")"
+  chmod 600 "$KEY_FILE"
+  trap 'rm -f "$KEY_FILE"' EXIT
+  printf '%s\n' "$M2S_APP_KEY_PASS" | age -d -i - -o "$KEY_FILE" "$M2S_APP_KEY_PATH" 2>/dev/null \
+    || { echo "Gagal decrypt kunci — cek M2S_APP_KEY_PASS." >&2; exit 1; }
+fi
+
 # -- JWT (RS256) berumur pendek, klaim GitHub App mengikuti dokumentasi.
 #    60 detik cukup untuk satu pertukaran token; umur JWT tidak menentukan
 #    umur installation token (selalu 1 jam).
@@ -45,7 +65,7 @@ PAYLOAD="$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((NOW-60))" "$((NOW+300))" 
 HEADER="$(printf '%s' '{"alg":"RS256","typ":"JWT"}' \
   | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
 SIG="$(printf '%s' "$HEADER.$PAYLOAD" \
-  | openssl dgst -sha256 -sign "$M2S_APP_KEY_PATH" -binary \
+  | openssl dgst -sha256 -sign "$KEY_FILE" -binary \
   | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
 JWT="$HEADER.$PAYLOAD.$SIG"
 

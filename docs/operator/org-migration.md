@@ -177,11 +177,16 @@ sehingga langkah 1 dan 3 di bawah adalah aksi manusia, bukan agent.
    `https://github.com/organizations/Mind2Screen-Dev-Team/settings/apps/new`
    - Hak minimal: `Contents: Read & Write`, `Pull requests: Read & Write`
    - Izinkan hanya 3 repo yang relevan (control, backend, frontend)
-   - Unduh **private key** masing-masing App saat dibuat; simpan di luar repo
-     (mis. `~/.claude/secrets/`). Kunci `m2s-approver` adalah aset bernilai
-     tinggi (ADR-001) — jangan commit ke mana pun.
+   - Unduh **private key** masing-masing App saat dibuat.
+   - **Enkripsi key** sebelum disimpan: `age -p -o ~/.claude/secrets/<app>.pem.age <unduhan>.pem`
+     (passphrase berbeda per App; simpan passphrase di password manager).
+     Plaintext `.pem` lalu dihapus. `scripts/gh-app-token.sh` menerima `.pem.age`
+     + passphrase via `M2S_APP_KEY_PASS`.
+   - Kunci `m2s-approver` adalah aset bernilai tinggi (ADR-001) — jangan commit
+     ke mana pun, simpan di luar repo.
    - Catat `app_id` tiap App. Dapat dibaca ulang via API setelah lahir:
      `gh api apps/<slug> --jq .id` (slug `m2s-worker` / `m2s-approver`).
+     Terpasang 2 Agustus 2026: worker `4461216`, approver `4461262`.
 2. Pasang ruleset per App. Bypass `actor_type: Integration` kini **legal** di org
    (V-08 hanya berlaku repo personal). Payload kanonik ada di
    `templates/github/rulesets/`, pemasang di `tools/apply-rulesets.sh`:
@@ -192,12 +197,23 @@ sehingga langkah 1 dan 3 di bawah adalah aksi manusia, bukan agent.
      worker tak boleh mengubah develop/staging, hanya push `agent/*` + buka PR.
 
 ```bash
-# <APP_ID> = id App m2s-approver.
-M2S_APPROVER_ID=<APP_ID> tools/apply-rulesets.sh
+# <APP_ID> = app_id App m2s-approver (4461262).
+M2S_APPROVER_ID=4461262 tools/apply-rulesets.sh
 ```
 
+   **Terpasang 2 Agustus 2026** di ketiga repo. Verifikasi fetch detail (list API
+   meng-omit `bypass_actors`):
+
+```bash
+gh api repos/Mind2Screen-Dev-Team/<repo>/rulesets/<id> --jq '{name, bypass_actors}'
+```
+
+   Hasil: `agent-push-restriction` → `Integration` `4461262` (approver);
+   `agent-worker-restriction` → `OrganizationAdmin`. `enforcement: active`.
 3. **Verifikasi §66 #9** (Implementer tidak merge PR sendiri): worker App buka PR,
    coba merge → harus ditolak. Ini momen pertama acceptance itu teruji.
+   Bila merge worker gagal `GH013`/auth dan push langsung worker ke
+   develop/staging ditolak, acceptance **terbukti**.
 
 ---
 

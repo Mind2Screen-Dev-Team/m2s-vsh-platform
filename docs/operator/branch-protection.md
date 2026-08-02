@@ -23,9 +23,11 @@ batas yang masih terbuka (D-02, D-03).
 > **STATUS 2 Agustus 2026 — pasca migrasi org (ADR-008).** Repo kini di
 > `Mind2Screen-Dev-Team`; proteksi `validate-changed-paths` **ikut** transfer dan
 > GitGuardian **ikut** (check-run `GitGuardian Security Checks`, app `gitguardian`,
-> `conclusion: success`, SHA `39ab5f2`). Rulesets (push restriction per App) belum
-> dipasang — menunggu dua GitHub App dibuat (manusia, UI). Lihat
-> `docs/operator/org-migration.md` §Langkah ADR-001 #5.
+> `conclusion: success`, SHA `39ab5f2`). Dua GitHub App (`m2s-worker` 4461216,
+> `m2s-approver` 4461262) dibuat + ruleset per App **terpasang** (bypass
+> `Integration` approver, `OrganizationAdmin` untuk worker) — lihat
+> `docs/operator/org-migration.md` §Langkah ADR-001 #5. §66 #9 menunggu uji
+> aktual (worker merge → ditolak).
 
 Dokumen ini menjelaskan cara memasang lapis penegakan di sisi GitHub, urutan yang
 wajib diikuti, dan tiga cara mengunci repo secara permanen bila urutannya
