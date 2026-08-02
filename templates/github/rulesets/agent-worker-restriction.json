@@ -1,0 +1,13 @@
+{
+  "name": "agent-worker-restriction",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": { "include": ["refs/heads/develop", "refs/heads/staging"], "exclude": [] }
+  },
+  "rules": [{ "type": "update" }],
+  "bypass_actors": [
+    { "actor_type": "Integration", "actor_id": 0, "bypass_mode": "always" },
+    { "actor_type": "OrganizationAdmin", "actor_id": null, "bypass_mode": "pull_request" }
+  ]
+}

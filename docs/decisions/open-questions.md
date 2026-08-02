@@ -306,6 +306,16 @@ berikan, bahkan di organization.
 **tidak lagi pada biaya yang sama**. D-02 (repo klien private) tetap menuntut Team;
 D-03 tidak.
 
+**Resolusi 2 Agustus 2026 — transfer org selesai (ADR-008).** Ketiga repo sudah di
+`Mind2Screen-Dev-Team`; ruleset `agent-push-restriction` (bypass `Integration`
+App `m2s-approver`) dan `agent-worker-restriction` (kunci develop/staging dari
+push langsung worker) menunggu App dibuat — lihat `docs/operator/org-migration.md`
+§Langkah ADR-001 #5. Verifikasi pasca-transfer (ADR-008 §Keputusan #4, wajib):
+branch protection `validate-changed-paths` **ikut** di develop+staging backend+
+frontend, GitGuardian **ikut** (check-run `GitGuardian Security Checks`, app
+`gitguardian`, `conclusion: "success"` pada SHA `39ab5f2`), rulesets 0 (baseline,
+belum dipasang). V-09 mencatat uji aktual `Integration` bypass di org.
+
 **Menunggu keputusan.** Tidak memblokir Phase 1–4. Yang masih tertahan adalah
 restriction *siapa* boleh merge lewat identitas App — dan V-07 menunjukkan itu
 menuntut migrasi ke organization, bukan sekadar membuat App. Kriteria Done §60
@@ -437,6 +447,8 @@ bagian di bawah, baca ADR-nya lebih dulu.
 | V-06 | Apakah pemilik repo otomatis ter-bypass ruleset tanpa masuk bypass list | ✅ **TIDAK ter-bypass** (diuji 2026-08-01, repo `m2s-vsh-rules-probe`) — ruleset `restrict updates` dengan `bypass_actors: []` menolak push pemilik: `GH013: Cannot update this protected ref`, dan API melaporkan `current_user_can_bypass: "never"`. **Berbeda dari classic protection**, yang menyatakan admin *"always able to push to a protected branch"*. Konsekuensi: ruleset mengikat pemilik repo, sehingga ADR-001 **#4** (bukan hanya #3) dapat ditegakkan tanpa organization |
 | V-07 | Apakah role "Maintain" tersedia sebagai bypass actor di repo personal | ✅ **`RepositoryRole` diterima** (diuji 2026-08-01) — `actor_id` 2, 4, dan 5 seluruhnya diterima API di repo akun personal. Ketersediaan di **picker UI** belum dilihat; ruleset probe sengaja dibiarkan hidup untuk itu. Tidak memblokir apa pun |
 | V-08 | Apakah `actor_type: Integration` (GitHub App) dapat menjadi bypass actor di repo **akun personal** | 🔴 **TIDAK — ditolak** (diuji 2026-08-01): `422 Actor GitHub Actions integration must be part of the ruleset source or owner organization`. **Mengoreksi ADR-007 #7 dan D-03**, yang menyimpulkan dari dokumentasi bahwa hanya `OrganizationAdmin` yang tak berlaku di repo personal. Uji API membantahnya: App harus menjadi bagian dari **owner organization**. Lihat D-03 |
+| V-09 | Apakah `actor_type: Integration` (GitHub App) dapat menjadi bypass actor di repo **organization** | ✅ **TERKONFIRMASI** (2 Agustus 2026). Setelah transfer ke `Mind2Screen-Dev-Team` (ADR-008), ruleset `agent-push-restriction` dengan bypass `Integration` App `m2s-approver` (id 4461262) **diterima API** di 3 repo — `enforcement: active`, `current_user_can_bypass: "never"`. V-08 (ditolak di repo personal) tidak lagi berlaku di org |
+| V-10 | Apakah `bypass_mode: pull_request` pada ruleset `update` mengizinkan GitHub App **merge** PR? | 🔴 **TIDAK** (diuji 2 Agustus 2026, backend) — `bypass_mode: pull_request` hanya mencakup update ref via PR, **bukan** `PUT /pulls/{n}/merge`. Approver App dapat submit review `APPROVE` (`m2s-approver[bot]`) tapi merge ditolak `405 Cannot update this protected ref`. **Mitigasi TERUJI** (prob): kombinasikan ruleset approver `bypass_mode: always` + `required_approving_review_count ≥ 1` + wajib PR. Alur akhir berhasil (`merged: true, merged_by: m2s-approver[bot]`): worker PR → approver APPROVE → approver merge. Detail: approver harus bypass **dua** ruleset (`agent-push-restriction` + `agent-worker-restriction`; yang kedua sebelumnya cuma OrganizationAdmin sehingga menahan approver juga). Lihat org-migration.md §3b |
 | V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | ⏳ **terbuka, dan lebih buruk dari yang tercatat** — klaim "guard secret terpasang" **tidak akurat**: `worktree-lifecycle.sh` ada di disk dan self-test-nya lulus, tetapi **tidak terdaftar di `.claude/settings.json`** (hanya event `PreToolUse`, `PostToolUse`, `SubagentStop` terdaftar; tidak ada `WorktreeCreate`/`WorktreeRemove`). Ditemukan Phase 4, 2026-08-01. Hook tidak pernah dipanggil runtime, sehingga mitigasi R-26 dan §42.6 **belum berjalan**. Lihat T-02 |
 
 ---

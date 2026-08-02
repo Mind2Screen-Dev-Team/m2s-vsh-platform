@@ -170,38 +170,102 @@ sebelum satu run hijau di lokasi baru.
 ## Langkah ADR-001 #5 — dua GitHub App (setelah org aktif)
 
 **Ini keputusan yang memakai `admin:org`.** Token agent tidak punya scope itu.
+**Membuat App tidak punya REST endpoint** — dilakukan lewat UI oleh manusia,
+sehingga langkah 1 dan 3 di bawah adalah aksi manusia, bukan agent.
 
 1. Buat App `m2s-worker` dan `m2s-approver` di:
    `https://github.com/organizations/Mind2Screen-Dev-Team/settings/apps/new`
    - Hak minimal: `Contents: Read & Write`, `Pull requests: Read & Write`
    - Izinkan hanya 3 repo yang relevan (control, backend, frontend)
-   - Catat `app_id` tiap App
+   - Unduh **private key** masing-masing App saat dibuat.
+   - **Enkripsi key** sebelum disimpan: `age -p -o ~/.claude/secrets/<app>.pem.age <unduhan>.pem`
+     (passphrase berbeda per App; simpan passphrase di password manager).
+     Plaintext `.pem` lalu dihapus. `scripts/gh-app-token.sh` menerima `.pem.age`
+     + passphrase via `M2S_APP_KEY_PASS`.
+   - Kunci `m2s-approver` adalah aset bernilai tinggi (ADR-001) — jangan commit
+     ke mana pun, simpan di luar repo.
+   - Catat `app_id` tiap App. Dapat dibaca ulang via API setelah lahir:
+     `gh api apps/<slug> --jq .id` (slug `m2s-worker` / `m2s-approver`).
+     Terpasang 2 Agustus 2026: worker `4461216`, approver `4461262`.
 2. Pasang ruleset per App. Bypass `actor_type: Integration` kini **legal** di org
-   (V-08 hanya berlaku repo personal). Contoh untuk `m2s-approver`:
+   (V-08 hanya berlaku repo personal). Payload kanonik ada di
+   `templates/github/rulesets/`, pemasang di `tools/apply-rulesets.sh`:
+   - `agent-push-restriction-approver.json` — bypass `Integration` App
+     `m2s-approver` (`bypass_mode: pull_request`), kunci develop/staging;
+     hanya App approver yang boleh merge lewat PR.
+   - `agent-worker-restriction.json` — bypass hanya manusia `OrganizationAdmin`;
+     worker tak boleh mengubah develop/staging, hanya push `agent/*` + buka PR.
 
 ```bash
-# <APP_ID> = id App m2s-approver. Kunci develop/staging; hanya App yang boleh ubah.
-gh api -X POST repos/Mind2Screen-Dev-Team/m2s-vsh-project-backend/rulesets --input - <<'JSON'
-{
-  "name": "agent-push-restriction",
-  "target": "branch",
-  "enforcement": "active",
-  "conditions": {
-    "ref_name": { "include": ["refs/heads/develop", "refs/heads/staging"], "exclude": [] }
-  },
-  "rules": [{ "type": "update" }],
-  "bypass_actors": [
-    { "actor_type": "Integration", "actor_id": <APP_ID>, "bypass_mode": "pull_request" }
-  ]
-}
-JSON
+# <APP_ID> = app_id App m2s-approver (4461262).
+M2S_APPROVER_ID=4461262 tools/apply-rulesets.sh
 ```
 
-   Untuk `m2s-worker`: **jangan** masukkan ke bypass — worker tak boleh mengubah
-   develop/staging. Ia hanya push `agent/*` + buka PR.
+   **Terpasang 2 Agustus 2026** di ketiga repo. Verifikasi fetch detail (list API
+   meng-omit `bypass_actors`):
 
+```bash
+gh api repos/Mind2Screen-Dev-Team/<repo>/rulesets/<id> --jq '{name, bypass_actors}'
+```
+
+   Hasil: `agent-push-restriction` → `Integration` `4461262` (approver);
+   `agent-worker-restriction` → `OrganizationAdmin`. `enforcement: active`.
 3. **Verifikasi §66 #9** (Implementer tidak merge PR sendiri): worker App buka PR,
    coba merge → harus ditolak. Ini momen pertama acceptance itu teruji.
+   Bila merge worker gagal `GH013`/auth dan push langsung worker ke
+   develop/staging ditolak, acceptance **terbukti**.
+
+   **TERBUKTI 2 Agustus 2026** — uji nyata: PR #5 backend
+   (`m2s-vsh-project-backend`, branch `agent/merge-probe`) dibuka sebagai
+   `m2s-worker[bot]`, coba merge squash sebagai worker → **ditolak**:
+   `405 Repository: File ... / Cannot update this protected ref. /
+   Required status check "validate-...-paths" is failing.` PR ditutup,
+   branch dihapus. Worker tidak dapat merge PR-nya sendiri (ADR-001 #5 efektif).
+
+### 3b. Temuan V-10 + mitigasi approver-merge (2 Agustus 2026)
+
+Uji lanjutan menemukan bahwa `bypass_mode: pull_request` pada ruleset `update`
+membiarkan GitHub App approver **submit review**, tetapi **tidak** mengizinkan
+**merge**:
+
+- Approver App (id 4461262) submit review `APPROVE` PR #7 → `{state: "APPROVED", user: "m2s-approver[bot]"}` **berhasil**.
+- Merge PR #7 yang sudah di-approve, sebagai approver → **tetap ditolak**:
+  `405 Repository rule violations, Cannot update this protected ref`.
+- Sebab: `PUT /pulls/{n}/merge` = update ref **base**, dan `bypass_mode: pull_request`
+  hanya mencakup update ref **via PR** (harus masuk lewat PR), bukan merge.
+- Lihat V-10 di `docs/decisions/open-questions.md`.
+
+**Keputusan mitigasi (disepakati pemilik + agent, backend jadi bukti).**
+Kombinasi agar approver bisa merge **tetap lewat PR + remwajib review**
+(audit trail penuh, push langsung tetap diblokir):
+
+| Lapis | Konfigurasi | Efek |
+|---|---|---|
+| Ruleset `agent-push-restriction` | approver App `bypass_mode: always` | approver lolos ruleset-approver |
+| Ruleset `agent-worker-restriction` | approver App + `OrganizationAdmin` di bypass | approver lolos ruleset-worker — **kunci temuan**: tanpa ini, approver masih kena `405` (ruleset-worker semula cuma OrganizationAdmin) |
+| Branch protection | `required_approving_review_count = 1` | wajib ada review approve sebelum merge |
+| Wajib lewat PR | beraktif (branch protection) | push langsung diblokir |
+
+Alur akhir (terbukti): worker buka PR → approver review `APPROVE` →
+approver merge (`merged_by: m2s-approver[bot]`). Author ≠ reviewer (worker vs
+approver) → bukan self-approval, prinsip #6 terjaga. Without review, merge
+ditolak `405 … At least 1 approving review is required`.
+
+**Status test (2 Agustus 2026).** Fisifikasikan di **backend** (`m2s-vsh-project-backend`):
+ruleset approver + worker = `bypass_mode: always` utk App 4461262, review count 1.
+Diuji PR #8: merge tanpa review ditolak, review APPROVE lalu merge → `merged: true`.
+
+**Terapkan penuh (2 Agustus).** Konfigurasi yang sama (ruleset approver + worker =
+`Integration:always` utk App 4461262, `required_approving_review_count: 1`
+develop+staging) berlaku di:
+- `m2s-vsh-project-backend` — develop ✓ staging ✓
+- `m2s-vsh-project-frontend` — develop ✓ staging ✓
+- `m2s-vsh-platform` — **tidak punya branch develop/staging** (hanya `main`);
+  ruleset `agent-*` ada tapi menarget ref yang tak ada, jadi tidak aktif. Akan
+  aktif bila branch develop/staging dibuat nanti. Tak perlu review count (tak ada
+  branch yang dilindungi).
+
+Verifikasi konsistensi di agent docs + `open-questions.md` V-10 / V-09.
 
 ---
 
