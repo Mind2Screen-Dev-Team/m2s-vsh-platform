@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fajarcandraaa/m2s-vsh-platform/internal/contract"
-	"github.com/fajarcandraaa/m2s-vsh-platform/internal/pathmatch"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/contract"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/pathmatch"
 )
 
 // Status reservasi. Nilai harus sama dengan enum reservationStatus pada

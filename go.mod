@@ -1,4 +1,4 @@
-module github.com/fajarcandraaa/m2s-vsh-platform
+module github.com/Mind2Screen-Dev-Team/m2s-vsh-platform
 
 go 1.26
 

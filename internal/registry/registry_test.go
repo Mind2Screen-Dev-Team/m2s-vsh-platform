@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fajarcandraaa/m2s-vsh-platform/internal/contract"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/contract"
 )
 
 func newRegistry(t *testing.T) *Registry {
@@ -168,7 +168,7 @@ func TestCheckConflictsReleasedDoesNotBlock(t *testing.T) {
 
 	// Masih menahan saat pending-merge.
 	if err := r.Transition("BE-101", StatusReservedPendingMerge, map[string]any{
-		"pr_url": "https://github.com/fajarcandraaa/m2s-vsh-project-backend/pull/7",
+		"pr_url": "https://github.com/Mind2Screen-Dev-Team/m2s-vsh-project-backend/pull/7",
 	}); err != nil {
 		t.Fatalf("Transition ke pending-merge: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestSharedFileOwnerConflict(t *testing.T) {
 
 // TestTransitionRules menegakkan urutan status Q12 dan larangan §30.
 func TestTransitionRules(t *testing.T) {
-	prURL := "https://github.com/fajarcandraaa/m2s-vsh-project-backend/pull/7"
+	prURL := "https://github.com/Mind2Screen-Dev-Team/m2s-vsh-project-backend/pull/7"
 
 	t.Run("active langsung ke released ditolak", func(t *testing.T) {
 		r := newRegistry(t)
