@@ -18,17 +18,20 @@ schema, template, runner script, dan registry reservasi path.
 
 | Peran | Repository | Visibility | Default branch |
 |---|---|---|---|
-| Control | `fajarcandraaa/m2s-vsh-platform` | public | `main` |
-| Backend (Go) | `fajarcandraaa/m2s-vsh-project-backend` | public | `main` |
-| Frontend (Next.js) | `fajarcandraaa/m2s-vsh-project-frontend` | public | `main` |
+| Control | `Mind2Screen-Dev-Team/m2s-vsh-platform` | public | `main` |
+| Backend (Go) | `Mind2Screen-Dev-Team/m2s-vsh-project-backend` | public | `main` |
+| Frontend (Next.js) | `Mind2Screen-Dev-Team/m2s-vsh-project-frontend` | public | `main` |
 
-Kedua repo pilot memiliki `main`, `develop`, dan `staging`. Normalisasi default branch
-tertutup sebagai **D-01** (29 Juli 2026) — lihat `docs/decisions/open-questions.md`.
+Ketiga repo milik organization `Mind2Screen-Dev-Team` (ADR-008). Backend & frontend
+memiliki `main`, `develop`, dan `staging`; control hanya `main`. Normalisasi default
+branch ditutup sebagai **D-01** (29 Juli 2026) — lihat
+`docs/decisions/open-questions.md`.
 
-Repository dibuat **public** secara sengaja: pada plan GitHub Free, branch protection
-hanya tersedia untuk repository public. Lihat `docs/decisions/capability-verification.md`.
+Repository dibuat **public** secara sengaja: di plan GitHub Free, branch protection
+dan rulesets hanya tersedia untuk repository public milik organization. Lihat
+`docs/decisions/capability-verification.md`.
 
-### Branch protection — aktif sebagian
+### Branch protection & rulesets (2 Agustus 2026)
 
 | Aturan | `main` pilot | `develop`/`staging` | `main` control |
 |---|---|---|---|
@@ -36,28 +39,34 @@ hanya tersedia untuk repository public. Lihat `docs/decisions/capability-verific
 | Penghapusan branch diblokir | ✅ | ✅ | ✅ |
 | Wajib lewat pull request | ✅ | ✅ | — |
 | Conversation resolved | ✅ | ✅ | — |
-| Required status checks | — human-only merge | ✅ **aktif** `validate-changed-paths` | 🟡 siap dipasang |
-| 2 required approval | ❌ butuh identitas ke-2 | ❌ butuh identitas ke-2 | — |
-| CODEOWNERS (jejak audit) | ✅ **aktif** di develop/staging/main | ✅ idem | 🟡 idem |
-| `require_code_owner_review` | ❌ **sengaja mati** — owner tunggal = author PR | ❌ idem | ❌ idem |
-| Pembatasan siapa boleh push | 🟡 lewat **ruleset**, menunggu GitHub App | 🟡 idem | ❌ |
+| Required status checks | 🟡 siap (main human-only merge) | ✅ **aktif** `validate-changed-paths` | 🟡 siap |
+| Review utk merge (`required_approving_review_count`) | — | ✅ **1** (m2s-approver) | — |
+| CODEOWNERS (jejak audit) | ✅ | ✅ | ✅ |
+| Require code-owner review | ❌ **sengaja mati** — author PR ≠ review | ❌ idem | ❌ idem |
+| Pembatasan siapa boleh push/merge | via ruleset App | ✅ `agent-*` **aktif** (approver `always`) | ❌ (tak-aktif, tak ada develop) |
 | Merge queue | ❌ **org-only pada setiap plan** | ❌ idem | ❌ |
 
 Berlaku juga bagi admin (`enforce_admins`). Control repo sengaja tidak mewajibkan PR
 agar dokumen dapat di-commit langsung.
 
-⚠️ **Lapisan anti-overlap #7 dan #8 belum tertegakkan.** Larangan "implementer tidak
-merge PR sendiri" tetap soft rule sampai dua GitHub App
-(`m2s-worker`/`m2s-approver`, ADR-001 #5) dibuat dan ruleset dipasang. Lihat ADR-001
-§ Status penegakan dan **D-03**.
+✅ **Lapisan anti-overlap #7 dan #8 kini DITEGAKKAN (2 Agustus 2026).** Dua GitHub App
+(`m2s-worker` 4461216, `m2s-approver` 4461262) dibuat; ruleset
+`agent-push-restriction` + `agent-worker-restriction` aktif di develop/staging
+backend & frontend; `required_approving_review_count = 1`. Alur terbukti: worker
+buka PR → approver `APPROVE` → merge (`merged_by: m2s-approver`). Worker tak bisa
+merge (§66 #9 teruji backend + frontend). Rincian:
+[`docs/operator/status-adr001-five-complete.md`](docs/operator/status-adr001-five-complete.md),
+ADR-001 §Status penegakan.
 
-✅ **Biaya D-03 terjawab (31 Juli 2026): plan Team tidak dibutuhkan.** Classic push
-restriction memang org-only, tetapi **repository ruleset** `restrict updates` dengan
-bypass list `Integration` (GitHub App) berlaku di repo akun personal — tanpa migrasi,
-tanpa biaya. Bila migrasi tetap dipilih, org plan **Free** sudah cukup untuk repo
-public. Satu-satunya fitur yang benar-benar menuntut organization adalah **merge
-queue**. Rincian dan perintah: [`docs/operator/branch-protection.md`](docs/operator/branch-protection.md),
-[ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #7.
+✅ **Biaya D-03 terjawab lewat migrasi org (ADR-008).** V-08 mengoreksi asumsi awal:
+`actor_type: Integration` (GitHub App) **tidak bisa** menjadi bypass actor di repo
+akun personal (`422 … must be part of the owner organization`). Model dua identitas
+ADR-001 #5 karena itu menuntut organization, bukan sekadar preferensi. Setelah
+transfer ke `Mind2Screen-Dev-Team`, V-09 konfirmasi App bisa jadi bypass actor; org
+plan **Free** cukup utk repo public. Satu-satunya fitur yang benar-benar menuntut
+plan **Team** adalah **repo private** (D-02); **merge queue** juga org-only pada
+setiap plan. Rincian: [`docs/operator/branch-protection.md`](docs/operator/branch-protection.md),
+[ADR-008](docs/adr/ADR-008-repo-ownership-migration.md).
 
 ---
 
@@ -126,7 +135,7 @@ ditimpa ADR.
 | 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ✅ selesai |
 | 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ✅ selesai |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ✅ selesai |
-| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | 🟡 **selesai sebagian** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #8) |
+| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | 🟡 **selesai sebagian** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #8) — prasyarat merge kini terpenuhi via ADR-008 + ADR-001 #5 (App + ruleset + review); merge queue menyusul |
 | 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |
 | 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ⬜ |
@@ -170,6 +179,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/adr/ADR-004-contract-format-and-runner-implementation.md`](docs/adr/ADR-004-contract-format-and-runner-implementation.md) | Format kontrak & bahasa runner |
 | [`docs/adr/ADR-005-additional-engineering-roles.md`](docs/adr/ADR-005-additional-engineering-roles.md) | Empat role engineering tambahan |
 | [`docs/adr/ADR-006-agent-definition-baseline.md`](docs/adr/ADR-006-agent-definition-baseline.md) | Baseline definisi 13 agent, `effort`, prasyarat platform, distribusi role |
+| [`docs/adr/ADR-008-repo-ownership-migration.md`](docs/adr/ADR-008-repo-ownership-migration.md) | Migrasi 3 repo ke org `Mind2Screen-Dev-Team` (prasyarat model dua identitas) |
 
 ---
 
