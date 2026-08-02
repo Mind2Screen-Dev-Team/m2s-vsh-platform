@@ -20,6 +20,12 @@ batas yang masih terbuka (D-02, D-03).
 > `required_approving_review_count` tetap `0` dan `require_code_owner_reviews`
 > tetap `false` — sengaja, lihat Perangkap 2.
 >
+> **UPDATE 2 Agustus 2026 (V-10).** Setelah identitas `m2s-approver` ada,
+> `required_approving_review_count` diubah menjadi `1` pada `develop`+`staging`
+> backend & frontend (Perangkap 2 tidak lagi berlaku — ada identitas kedua utk
+> approve). Worked sama approver App: worker PR → approver APPROVE → merge.
+> Lihat V-10 `docs/decisions/open-questions.md`.
+>
 > **STATUS 2 Agustus 2026 — pasca migrasi org (ADR-008).** Repo kini di
 > `Mind2Screen-Dev-Team`; proteksi `validate-changed-paths` **ikut** transfer dan
 > GitGuardian **ikut** (check-run `GitGuardian Security Checks`, app `gitguardian`,
@@ -228,7 +234,9 @@ Catatan pada payload:
 
 - `strict: true` — *require branches to be up to date before merging*, pengganti
   sebagian manfaat merge queue (Q16).
-- `required_approving_review_count: 0` — **sengaja**. Lihat Perangkap 2.
+- `required_approving_review_count: 0` — **sengaja** saat hanya satu kolaborator
+  (Perangkap 2). **UPDATE 2 Agustus (V-10):** dengan identitas `m2s-approver` ada,
+  nilai kini `1` di backend+frontend develop/staging — lihat STATUS di atas.
 - `require_code_owner_reviews: false` — **sengaja**. Lihat Perangkap 2.
 - `restrictions: null` — classic restriction org-only, ditolak `422` di repo
   personal (D-03). Gunakan ruleset di bawah.
@@ -362,9 +370,9 @@ gh api "repos/Mind2Screen-Dev-Team/<repo>/branches" --jq '.[].name'
 | Batas | Sebab | Konsekuensi |
 |---|---|---|
 | Merge queue tidak tersedia | org-only pada setiap plan | mitigasi overlap semantik (§29.8, R-01) bersandar reservasi + urutan merge TL/SA (§46) |
-| `required_approving_review_count: 0` | satu kolaborator, larangan self-approval | §66 #9 tidak dapat diuji; ADR-001 belum berlaku efektif |
+| ~~`required_approving_review_count: 0`~~ | ~~satu kolaborator~~ (Perangkap 2) | **RESOLVED 2 Agustus** — kini `1` dengan identitas `m2s-approver` (V-10). §66 #9 teruji (worker tak merge), approver bisa merge setelỳ review |
 | `require_code_owner_review` mati | owner tunggal = author PR | CODEOWNERS memberi jejak audit, bukan gate |
-| Push restriction (ruleset per App) belum terpasang | menunggu dua GitHub App dibuat (UI manusia) | agent yang membuka PR masih dapat me-merge PR-nya sendiri sampai ruleset aktif. Jalur sudah siap: `templates/github/rulesets/` + `tools/apply-rulesets.sh` (ADR-008 §Langkah ADR-001 #5) |
+| ~~Push restriction (ruleset per App) belum terpasang~~ | ~~menunggu App~~ | **RESOLVED 2 Agustus** — ruleset `agent-push-restriction` + `agent-worker-restriction` aktif di backend&frontend develop/staging; approver `Integration:always`, worker tak bypass. `templates/github/rulesets/` + `tools/apply-rulesets.sh` |
 | Jalur `merge_group` melapor sukses tanpa validasi ulang | payload tidak memuat branch asal | aman selama merge queue mati; tinjau saat diaktifkan |
 | Repo klien private tanpa enforcement | D-02 | satu-satunya hal yang benar-benar menuntut plan Team |
 | Artefak ada di dua tempat | kanonik + salinan repo aplikasi | `verify-github` memeriksa bentuk, bukan kesamaan byte |

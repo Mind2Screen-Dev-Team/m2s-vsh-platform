@@ -254,9 +254,18 @@ ditolak `405 … At least 1 approving review is required`.
 **Status test (2 Agustus 2026).** Fisifikasikan di **backend** (`m2s-vsh-project-backend`):
 ruleset approver + worker = `bypass_mode: always` utk App 4461262, review count 1.
 Diuji PR #8: merge tanpa review ditolak, review APPROVE lalu merge → `merged: true`.
-LANGSUNG dipakai. Untuk repo platform + frontend: **belum diubah** — terapkan konfigurasi
-yang sama (ruleset *both* approver=`always`, worker+approver, review count 1) supaya
-semua 3 repo konsisten.
+
+**Terapkan penuh (2 Agustus).** Konfigurasi yang sama (ruleset approver + worker =
+`Integration:always` utk App 4461262, `required_approving_review_count: 1`
+develop+staging) berlaku di:
+- `m2s-vsh-project-backend` — develop ✓ staging ✓
+- `m2s-vsh-project-frontend` — develop ✓ staging ✓
+- `m2s-vsh-platform` — **tidak punya branch develop/staging** (hanya `main`);
+  ruleset `agent-*` ada tapi menarget ref yang tak ada, jadi tidak aktif. Akan
+  aktif bila branch develop/staging dibuat nanti. Tak perlu review count (tak ada
+  branch yang dilindungi).
+
+Verifikasi konsistensi di agent docs + `open-questions.md` V-10 / V-09.
 
 ---
 
