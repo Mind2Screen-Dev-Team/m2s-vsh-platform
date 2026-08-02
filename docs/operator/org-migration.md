@@ -236,21 +236,27 @@ membiarkan GitHub App approver **submit review**, tetapi **tidak** mengizinkan
 - Lihat V-10 di `docs/decisions/open-questions.md`.
 
 **Keputusan mitigasi (disepakati pemilik + agent, backend jadi bukti).**
-Kombinasi tiga lapis agar approver bisa merge **tetap lewat PR + wajib review**
-(audit trail utuh, push langsung tetap diblokir):
+Kombinasi agar approver bisa merge **tetap lewat PR + remwajib review**
+(audit trail penuh, push langsung tetap diblokir):
 
 | Lapis | Konfigurasi | Efek |
 |---|---|---|
-| Ruleset approver | izinkan merge utk App `m2s-approver` (bukan `pull_request` saja) | approver dapat merge |
-| Branch protection | `required_approving_review_count ≥ 1` | wajib ada review approve |
-| Wajib lewat PR | sudah aktif (branch protection) | push langsung diblokir |
+| Ruleset `agent-push-restriction` | approver App `bypass_mode: always` | approver lolos ruleset-approver |
+| Ruleset `agent-worker-restriction` | approver App + `OrganizationAdmin` di bypass | approver lolos ruleset-worker — **kunci temuan**: tanpa ini, approver masih kena `405` (ruleset-worker semula cuma OrganizationAdmin) |
+| Branch protection | `required_approving_review_count = 1` | wajib ada review approve sebelum merge |
+| Wajib lewat PR | beraktif (branch protection) | push langsung diblokir |
 
-Alur akhir: worker buka PR → approver review `APPROVE` → approver merge.
-Author ≠ reviewer (worker vs approver) → bukan self-approval, prinsip #6 terjaga.
+Alur akhir (terbukti): worker buka PR → approver review `APPROVE` →
+approver merge (`merged_by: m2s-approver[bot]`). Author ≠ reviewer (worker vs
+approver) → bukan self-approval, prinsip #6 terjaga. Without review, merge
+ditolak `405 … At least 1 approving review is required`.
 
-**Status test:** pertama kali dijalankan di **backend** (`m2s-vsh-project-backend`)
-sebagai bukti; jika hijau, baru naik 3 repo. Catat hasil di sini bila ada
-deviasi.
+**Status test (2 Agustus 2026).** Fisifikasikan di **backend** (`m2s-vsh-project-backend`):
+ruleset approver + worker = `bypass_mode: always` utk App 4461262, review count 1.
+Diuji PR #8: merge tanpa review ditolak, review APPROVE lalu merge → `merged: true`.
+LANGSUNG dipakai. Untuk repo platform + frontend: **belum diubah** — terapkan konfigurasi
+yang sama (ruleset *both* approver=`always`, worker+approver, review count 1) supaya
+semua 3 repo konsisten.
 
 ---
 
