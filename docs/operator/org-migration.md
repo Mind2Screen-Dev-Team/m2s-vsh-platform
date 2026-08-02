@@ -218,9 +218,39 @@ gh api repos/Mind2Screen-Dev-Team/<repo>/rulesets/<id> --jq '{name, bypass_actor
    **TERBUKTI 2 Agustus 2026** — uji nyata: PR #5 backend
    (`m2s-vsh-project-backend`, branch `agent/merge-probe`) dibuka sebagai
    `m2s-worker[bot]`, coba merge squash sebagai worker → **ditolak**:
-   `405 Repository rule violations found / Cannot update this protected ref. /
-   Required status check "validate-changed-paths" is failing.` PR ditutup,
+   `405 Repository: File ... / Cannot update this protected ref. /
+   Required status check "validate-...-paths" is failing.` PR ditutup,
    branch dihapus. Worker tidak dapat merge PR-nya sendiri (ADR-001 #5 efektif).
+
+### 3b. Temuan V-10 + mitigasi approver-merge (2 Agustus 2026)
+
+Uji lanjutan menemukan bahwa `bypass_mode: pull_request` pada ruleset `update`
+membiarkan GitHub App approver **submit review**, tetapi **tidak** mengizinkan
+**merge**:
+
+- Approver App (id 4461262) submit review `APPROVE` PR #7 → `{state: "APPROVED", user: "m2s-approver[bot]"}` **berhasil**.
+- Merge PR #7 yang sudah di-approve, sebagai approver → **tetap ditolak**:
+  `405 Repository rule violations, Cannot update this protected ref`.
+- Sebab: `PUT /pulls/{n}/merge` = update ref **base**, dan `bypass_mode: pull_request`
+  hanya mencakup update ref **via PR** (harus masuk lewat PR), bukan merge.
+- Lihat V-10 di `docs/decisions/open-questions.md`.
+
+**Keputusan mitigasi (disepakati pemilik + agent, backend jadi bukti).**
+Kombinasi tiga lapis agar approver bisa merge **tetap lewat PR + wajib review**
+(audit trail utuh, push langsung tetap diblokir):
+
+| Lapis | Konfigurasi | Efek |
+|---|---|---|
+| Ruleset approver | izinkan merge utk App `m2s-approver` (bukan `pull_request` saja) | approver dapat merge |
+| Branch protection | `required_approving_review_count ≥ 1` | wajib ada review approve |
+| Wajib lewat PR | sudah aktif (branch protection) | push langsung diblokir |
+
+Alur akhir: worker buka PR → approver review `APPROVE` → approver merge.
+Author ≠ reviewer (worker vs approver) → bukan self-approval, prinsip #6 terjaga.
+
+**Status test:** pertama kali dijalankan di **backend** (`m2s-vsh-project-backend`)
+sebagai bukti; jika hijau, baru naik 3 repo. Catat hasil di sini bila ada
+deviasi.
 
 ---
 
