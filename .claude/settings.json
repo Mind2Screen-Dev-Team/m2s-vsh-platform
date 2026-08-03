@@ -26,6 +26,7 @@
       "Bash(go test:*)",
       "Bash(go vet:*)",
       "Bash(go build:*)",
+      "Bash(go run:*)",
       "Bash(go fmt:*)",
       "Bash(npm run build)",
       "Bash(npm run lint)",
