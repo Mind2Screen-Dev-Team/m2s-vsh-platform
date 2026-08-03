@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "mode": "warn",
+  "project": "m2s-vsh-platform",
+  "decisions": [
+    {
+      "id": "ADR-001",
+      "title": "Kewenangan Approval dan Merge bagi Agent",
+      "status": "accepted",
+      "date": "2026-07-29",
+      "scope": ["github-workflow", "agent-authority", "branch-protection"],
+      "summary": "Dua identitas GitHub App: m2s-worker (push/PR) dan m2s-approver (approve/merge ke develop/staging). Main tetap milik manusia.",
+      "forbidden": ["m2s-worker tidak boleh approve atau merge", "m2s-approver tidak boleh push langsung", "manusia wajib merge ke main"]
+    },
+    {
+      "id": "ADR-002",
+      "title": "FX Injector Ownership",
+      "status": "accepted",
+      "date": "2026-07-29",
+      "scope": ["dependency-injection", "fx", "go"],
+      "summary": "app/injector/** dimiliki oleh task WIRE-* khusus. Engineering agent tidak boleh mengubah injector tanpa task tersebut.",
+      "forbidden": ["mengubah app/injector/** tanpa task WIRE-*"]
+    },
+    {
+      "id": "ADR-003",
+      "title": "Phase Order: Contract Before Agents",
+      "status": "accepted",
+      "date": "2026-07-29",
+      "scope": ["task-execution", "contract-first"],
+      "summary": "Backend dan Frontend tidak boleh berjalan paralel sebelum API/shared contract berstatus approved.",
+      "forbidden": ["menjalankan BE dan FE paralel tanpa contract approved"]
+    },
+    {
+      "id": "ADR-004",
+      "title": "Contract Format and Runner Implementation",
+      "status": "accepted",
+      "date": "2026-07-29",
+      "scope": ["task-contract", "runner", "go"],
+      "summary": "Task contract JSON/YAML dengan schema_version 1.0. Runner deterministik memvalidasi reservation, dependency, dan path sebelum menjalankan agent.",
+      "forbidden": ["runner tidak boleh membuat keputusan teknis", "wrapper script harus tipis (max 3 baris kode)"]
+    },
+    {
+      "id": "ADR-005",
+      "title": "Additional Engineering Roles",
+      "status": "accepted",
+      "date": "2026-07-31",
+      "scope": ["roles", "fullstack", "mobile", "android", "ios"],
+      "summary": "Empat role engineering tambahan: fullstack-engineer, mobile-engineer, android-developer, ios-developer. Satu repository per task, tanpa pengecualian.",
+      "forbidden": ["fullstack-engineer menulis ke dua repo terpisah", "mobile-engineer menulis ke repo backend"]
+    },
+    {
+      "id": "ADR-006",
+      "title": "Agent Definition Baseline",
+      "status": "accepted",
+      "date": "2026-07-29",
+      "scope": ["agent-definition", "frontmatter", "worktree"],
+      "summary": "Write-capable agent wajib isolation: worktree. Read-only reviewer tidak wajib. Agent definition disimpan di .claude/agents/.",
+      "forbidden": ["agent tidak boleh mengubah definisi dirinya sendiri atau agent lain"]
+    },
+    {
+      "id": "ADR-007",
+      "title": "GitHub Workflow Enforcement",
+      "status": "accepted",
+      "date": "2026-07-29",
+      "scope": ["github", "ci", "branch-protection"],
+      "summary": "PR template, CODEOWNERS, required checks, review policy, merge queue. CI tidak boleh mempercayai hook lokal sebagai satu-satunya enforcement.",
+      "forbidden": ["agent tidak boleh bypass CI", "agent tidak boleh force-push ke protected branch"]
+    },
+    {
+      "id": "ADR-008",
+      "title": "Repo Ownership Migration to Organization",
+      "status": "accepted",
+      "date": "2026-08-01",
+      "scope": ["github-org", "repository-transfer", "mind2screen-dev-team"],
+      "summary": "Tiga repo (control, backend, frontend) dipindah ke organization Mind2Screen-Dev-Team. Transfer, bukan fork. Referensi hardcoded diganti sebelum transfer.",
+      "forbidden": ["fork ke org", "transfer sebelum ref diganti", "biarkan go.mod menunjuk akun lama"]
+    }
+  ],
+  "rules": {
+    "warn_on_violation": true,
+    "block_on_violation": false,
+    "owner_role": "technical-lead-system-analyst",
+    "consumer_roles": ["backend-engineer", "frontend-engineer", "fullstack-engineer", "mobile-engineer", "android-developer", "ios-developer", "qa-engineer", "code-reviewer", "devops-release", "technical-writer"]
+  }
+}
