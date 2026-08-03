@@ -20,13 +20,16 @@ dokumentasi.
 
 ---
 
-## H-01: CI Reject PR agent → main langsung
+## H-01: PR agent → develop saja — tidak boleh lompati staging/main
 
 **Masalah:** Workflow `path-enforcement.yml` hanya validasi path, bukan base branch.
-Agent bisa push PR ke `main` dan lolos CI.
+Agent bisa push PR ke `main` atau `staging` dan lolos CI.
 
-**Guard:** workflow memeriksa `github.base_ref`. PR dengan head `agent/*` yang
-target `main` (pada repo aplikasi) → fail-closed.
+**Aturan hirarki (§44):** promosi hanya berurutan —
+`develop → staging → main`, tidak boleh lompati.
+
+**Guard:** workflow memeriksa `github.base_ref`. PR dengan head `agent/*` WAJIB
+target `develop`. PR agent → `staging` atau `main` langsung → fail-closed.
 
 ```yaml
 - name: Validasi base branch
@@ -34,9 +37,8 @@ target `main` (pada repo aplikasi) → fail-closed.
   run: |
     case "${{ github.base_ref }}" in
       develop) exit 0 ;;
-      staging) exit 0 ;;
       *)
-        echo "::error::branch agent/* wajib target develop atau staging (§44), bukan ${{ github.base_ref }}"
+        echo "::error::branch agent/* wajib target develop (§44); staging/main via promosi berurutan, bukan lompati develop"
         exit 1
         ;;
     esac
@@ -116,6 +118,57 @@ scaffold_forbidden() {
 yang tidak realistis ditolak SEBELUM agent mulai — tidak ada loop remediasi.
 
 ---
+
+---
+
+## H-08: Branch Promotion — hanya naik satu level, tanpa lompat
+
+**Masalah:** H-01 menahan PR agent → develop. Tapi branch integration
+(`develop → staging → main`) perlu juga diatur — `develop` merge ke `main`
+langsung tanpa lewat `staging` melompati gate.
+
+**Aturan:** promosi branch hanya **naik satu level**:
+
+```
+develop  ──► staging  ──► main
+   ▲            ▲           ▲
+   └─ naik 1    └─ naik 1   └─ (human, production)
+```
+
+**Guard:** workflow `path-enforcement.yml` (atau ruleset GitHub) memeriksa
+target PR untuk integration branch:
+
+```yaml
+- name: Validasi promosi branch (integration)
+  if: github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'staging'
+  env:
+    BASE: ${{ github.base_ref }}
+    HEAD: ${{ github.head_ref }}
+  run: |
+    set -u
+    # Head branch untuk promosi ke staging harus develop; ke main harus staging.
+    case "$BASE" in
+      staging)
+        [ "$HEAD" = "develop" ] || {
+          echo "::error::promosi ke staging harus dari develop, bukan $HEAD (§44 hirarki)"
+          exit 1
+        }
+        ;;
+      main)
+        [ "$HEAD" = "staging" ] || {
+          echo "::error::promosi ke main harus dari staging, bukan $HEAD (§44 hirarki)"
+          exit 1
+        }
+        ;;
+    esac
+```
+
+**Kombinasi dengan H-01:**
+- `agent/* → develop` — satu-satunya jalan agent masuk
+- `develop → staging` — promosi (H-08)
+- `staging → main` — promosi final, WAJIB human approval (m2s-approver)
+
+Tidak ada jalur yang melompati level.
 
 ---
 
@@ -256,10 +309,11 @@ approved_status() {
 | H-01 | Reject agent/* → main | `path-enforcement.yml` (repo aplikasi) | fail-closed exit 1 |
 | H-02 | Branch naming lint | `path-enforcement.yml` step scope | fail-closed exit 1 |
 | H-03 | Scaffold realism check | `scripts/validate-task.sh` | fail-closed exit 2 |
-| H-04 | Architecture Constraints di agent template | `.claude/agents/*.md` + test | test fail |
+| H-04 | Architecture-specific di agent template | `.claude/agents/*.md` + test | test fail |
 | H-05 | Task spec validate pre-launch | `scripts/validate-task.sh` | fail-closed exit 2 |
 | H-06 | Pre-flight checklist runner | `scripts/launch-task.sh` | fail-closed exit 2 |
 | H-07 | TL/SA gate — contract approved | `validate-handoff.sh` | fail-closed |
+| H-08 | Branch promotion — naik satu level | `path-enforcement.yml` (integration) | fail-closed exit 1 |
 
 Semua fail-closed. Tidak ada tambahan tool/dependency.
 
@@ -274,5 +328,6 @@ Semua fail-closed. Tidak ada tambahan tool/dependency.
 5. **H-05:** `validate-task` spec dengan base_branch tidak ada → exit 2.
 6. **H-06:** `launch-task` spec tanpa contract referenced → preflight deny exit 2, agent tidak start.
 7. **H-07:** task spec status bukan `approved` → subagent implementation diblokir.
-8. **Regression:** `make verify` masih hijau — guard baru tidak melanggar
+8. **H-08:** PR `develop → main` tanpa staging → reject. PR `staging → main` → lolos.
+9. **Regression:** `make verify` masih hijau — guard baru tidak melanggar
    existing test (§68 negative tests).
