@@ -76,6 +76,14 @@ check_workflow() {
   if ! grep -qE '^permissions:' "$f"; then
     fail "$f tanpa blok \`permissions:\` — workflow harus menyatakan hak minimum secara eksplisit"
   fi
+
+  # 6. H-02: branch agent/* wajib dipecah task-id lewat sed, bukan dibiarkan
+  #    lolos sampai contract dicari jauh kemudian. Workflow tanpa langkah ini
+  #    gagal-BUKA: branch planning `agent/planning-xyz` lolos, lalu CI baru
+  #    patah saat contract tak ditemukan (phase-8-hardening.md H-02).
+  if ! grep -qF 's#^agent/' "$f"; then
+    fail "$f tanpa langkah ekstraksi task-id agent/ (H-02) — branch agent/* tanpa task-id akan lolos scope lalu gagal jauh saat contract dicari"
+  fi
 }
 
 # ── CODEOWNERS ───────────────────────────────────────────────────────────

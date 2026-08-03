@@ -336,6 +336,22 @@ func TestDeployedAgentsMatchTemplates(t *testing.T) {
 	}
 }
 
+// TestArchitectureConstraintsPresent — H-04 (phase-8-hardening.md).
+//
+// Kesalahan Phase 7 (PR agent → main, branch planning agent/*) semuanya karena
+// section arsitektur tidak dimuat ke konteks agent sebelum bekerja. Setiap role
+// wajib memuat blok Architecture Constraints yang mendaftar section yang HARUS
+// dibaca sebelum mulai — termasuk code-reviewer dan project-manager yang bukan
+// writerRole tetapi tetap bekerja di dalam batas arsitektur yang sama.
+func TestArchitectureConstraintsPresent(t *testing.T) {
+	const marker = "## Architecture Constraints (wajib baca sebelum kerja)"
+	for role, doc := range allAgents(t) {
+		if !strings.Contains(doc.body, marker) {
+			t.Errorf("%s: tidak memuat blok %q (H-04)", role, marker)
+		}
+	}
+}
+
 // TestAgentBoundariesAreDistinct adalah pembuktian kriteria Done §57:
 // "setiap agent menunjukkan tool dan path boundary yang berbeda."
 //

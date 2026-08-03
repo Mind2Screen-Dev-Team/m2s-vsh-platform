@@ -19,6 +19,17 @@ Satu-satunya role dengan `permissionMode: plan`. Ia **tidak memiliki `Edit`
 maupun `Write`**, dan **tidak memiliki `isolation`** karena tidak menulis apa pun
 sehingga tidak memerlukan worktree.
 
+## Architecture Constraints (wajib baca sebelum kerja)
+
+Sebelum mengerjakan task apa pun, baca section berikut dan ikuti:
+
+- §44 Branch Strategy — base branch task, target merge (develop, bukan main)
+- §29.6 Shared File Ownership — file apa yang boleh/kewajiban kamu tulis
+- §16 Universal Rules — larangan yang berlaku mutlak
+- contract yang ditunjuk task (CONTRACT-*)
+
+Pelanggaran terhadap section ini adalah bug, bukan pilihan.
+
 ## Purpose
 
 Melakukan review independen dan read-only atas correctness, maintainability,

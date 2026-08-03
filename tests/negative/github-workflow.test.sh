@@ -148,6 +148,34 @@ jobs:
       - name: Tentukan lingkup
         run: echo ok'
 
+# H-02: scope step tanpa langkah ekstraksi task-id dari branch agent/*.
+# Branch planning `agent/planning-xyz` lolos scope lalu patah jauh kemudian
+# saat contract tak ditemukan — gate palsu. Workflow tanpa sed slug wajib
+# ditolak (phase-8-hardening.md H-02).
+expect_reject "tanpa ekstraksi task-id (H-02)" workflow 'name: path-enforcement
+
+on:
+  pull_request:
+    branches: [develop, staging]
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-changed-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tentukan lingkup
+        id: scope
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            agent/*) echo "mode=agent" ;;
+            *)       echo "mode=non-agent" ;;
+          esac'
+
 # §68: CODEOWNERS tanpa cakupan .github/** — R-20 tidak tertahan.
 expect_reject "CODEOWNERS tanpa .github" codeowners '*            @fajarcandraaa
 /.claude/    @fajarcandraaa
@@ -213,6 +241,38 @@ expect_accept "template CODEOWNERS" codeowners \
   "$REPO_ROOT/templates/github/CODEOWNERS"
 expect_accept "template PR" prtemplate \
   "$REPO_ROOT/templates/github/PULL_REQUEST_TEMPLATE.md"
+
+# ── Salinan repo aplikasi (H-01/H-08, Phase 8) ───────────────────────────
+# Salinan app-repo ter-checkout di sebelah control repo. Aturan bentuk harus
+# berlaku juga pada keduanya; kalau tidak, guard yang di-template tidak pernah
+# benar-benar aktif di repo yang menjalankan agent. Skipped bila tidak
+# ter-checkout, dengan pesan eksplisit.
+# Induk repo, bukan $REPO_ROOT/.. — saat test berjalan dari worktree,
+# REPO_ROOT menunjuk .claude/worktrees/<nama> sehingga `..` mengarah ke
+# direktori worktree, bukan ke sebelah control repo.
+SIBLING_ROOT="$REPO_ROOT/.."
+case "$REPO_ROOT" in
+  */.claude/worktrees/*) SIBLING_ROOT="${REPO_ROOT%/.claude/worktrees/*}/.." ;;
+esac
+
+for APP in backend frontend; do
+  f="$SIBLING_ROOT/m2s-vsh-project-$APP/.github/workflows/path-enforcement.yml"
+  if [ -f "$f" ]; then
+    # Skipped bila masih memuat org lama — berarti patch phase-8 belum
+    # diterapkan manusia, bukan pelanggaran aturan bentuk.
+    if grep -q "fajarcandraaa/m2s-vsh-platform" "$f"; then
+      echo "  SKIP [$APP] memuat org fajarcandraaa — terapkan patch docs/operator/phase-8-human-only-patches.md dulu (bukan pelanggaran bentuk)"
+    else
+      expect_accept "workflow app $APP" workflow "$f"
+      if ! grep -q "Mind2Screen-Dev-Team/m2s-vsh-platform" "$f"; then
+        echo "  FAIL [$APP] tidak menyebut org Mind2Screen-Dev-Team pada checkout control repo"
+        fails=1
+      fi
+    fi
+  else
+    echo "  SKIP [$APP] salinan workflow tidak ter-checkout di $f"
+  fi
+done
 
 if [ "$fails" -eq 0 ]; then
   echo "ok  github-workflow.test.sh: $pass kasus §68 lulus"
