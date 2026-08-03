@@ -63,6 +63,7 @@ on_create() {
   if secrets=$(find_secrets "$worktree"); then
     deny "worktree $worktree memuat berkas secret; pembuatan dibatalkan: $(echo "$secrets" | head -3 | tr '\n' ' ')"
   fi
+  echo "$worktree"
   exit 0
 }
 
