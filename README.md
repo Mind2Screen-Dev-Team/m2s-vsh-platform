@@ -137,9 +137,9 @@ ditimpa ADR.
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ✅ selesai |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | 🟡 **selesai sebagian** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #8) — prasyarat merge kini terpenuhi via ADR-008 + ADR-001 #5 (App + ruleset + review); merge queue menyusul |
 | 5 | Tool Pilot — 6 skill, 2 agent, Mneme warn, DESIGN.md | §61 | ✅ **selesai** (PR #11, 3 Agustus 2026) |
-| 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |
-| 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ⬜ |
-| 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ⬜ |
+| 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ **dilewati** ([D-P7-2](docs/decisions/D-P7-2-phase-6-skip.md)) — pilot kecil tak butuh design handoff; dapat dijalankan bila fitur berikut membutuhkan |
+| 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ✅ **selesai** (3 Agustus 2026) — 9 PR: contract, 4 specs, 4 ADR, QA, BE endpoint, CORS, FE StatusCard |
+| 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ➡️ berikutnya — blueprint hardening H-01..08 di [phase-8-hardening](docs/architecture/phase-8-hardening.md) |
 
 ⇄ **Phase 1 dan 2 ditukar** oleh [ADR-003](docs/adr/ADR-003-phase-order-contract-before-agents.md):
 task contract dikerjakan sebelum core agents, karena definisi agent memuat batas path

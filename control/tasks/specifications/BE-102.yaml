@@ -7,7 +7,7 @@ task:
   title: "Implementasi GET /api/v1/status endpoint di backend Go"
   type: "backend-implementation"
   project: "pilot-phase-7"
-  status: "pending"
+  status: "completed"
   contract_ids: ["CONTRACT-102"]
 
 ownership:

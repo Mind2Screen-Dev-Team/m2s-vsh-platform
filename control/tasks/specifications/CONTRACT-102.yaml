@@ -7,7 +7,7 @@ task:
   title: "Tulis API contract untuk System Status endpoint"
   type: "contract-change"
   project: "pilot-phase-7"
-  status: "pending"
+  status: "approved"
   contract_ids: []
 
 ownership:
