@@ -91,6 +91,11 @@
           "enum": ["any", "darwin", "linux"],
           "default": "any"
         },
+        "scaffold": {
+          "description": "Menandai task sebagai pembuatan kerangka proyek pada stack tertentu. Bila ada, runner menuntut paths.allowed menampung berkas yang scaffolding-nya pasti hasilkan — `go mod init` selalu menulis go.mod, `create-next-app` selalu menulis src/app/layout.tsx dan globals.css. Contract yang melarangnya membuat agent memilih antara menaati contract atau menyelesaikan task, dan itu terjadi pada Phase 7 (phase-8-hardening.md H-03). Opt-in: tanpa field ini task bukan scaffolding dan tidak diperiksa, sehingga task pada repo yang sudah berdiri tetap boleh melarang go.mod.",
+          "type": "string",
+          "enum": ["go", "nextjs"]
+        },
         "max_turns": { "type": "integer", "minimum": 1, "maximum": 200 },
         "timeout_minutes": { "type": "integer", "minimum": 1, "maximum": 480 }
       }

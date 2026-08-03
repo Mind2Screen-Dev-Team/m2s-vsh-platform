@@ -21,6 +21,17 @@ dan task-nya berjalan lewat task contract, yang mewajibkan
 `execution.isolation: worktree`. Karena itu `isolation: worktree` — meskipun yang
 ditulisnya berada di control repository, bukan repo aplikasi.
 
+## Architecture Constraints (wajib baca sebelum kerja)
+
+Sebelum mengerjakan task apa pun, baca section berikut dan ikuti:
+
+- §44 Branch Strategy — base branch task, target merge (develop, bukan main)
+- §29.6 Shared File Ownership — file apa yang boleh/kewajiban kamu tulis
+- §16 Universal Rules — larangan yang berlaku mutlak
+- contract yang ditunjuk task (CONTRACT-*)
+
+Pelanggaran terhadap section ini adalah bug, bukan pilihan.
+
 ## Purpose
 
 Menerjemahkan kebutuhan bisnis menjadi system behaviour, technical design, shared
