@@ -46,6 +46,9 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          # Control repo main-only per konvensi, sehingga H-01 tidak berlaku.
+          APPLICATION_REPO: 'false'
         run: |
           set -u
           if [ "$EVENT_NAME" = "merge_group" ]; then
@@ -56,6 +59,12 @@ jobs:
 
           case "$HEAD_REF" in
             agent/*) ;;
+            worktree-*)
+              # H-02: branch planning/dokumentasi — jalur normal di control repo.
+              echo "mode=planning" >> "$GITHUB_OUTPUT"
+              echo "task_id=" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
             *)
               echo "mode=non-agent" >> "$GITHUB_OUTPUT"
               echo "task_id=" >> "$GITHUB_OUTPUT"
@@ -68,6 +77,13 @@ jobs:
           if [ -z "$task_id" ]; then
             echo "::error::branch '$HEAD_REF' tidak mengikuti pola agent/<task-id>-<slug> (§44)"
             echo "mode=malformed" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          # H-01: tidak menyala di sini (APPLICATION_REPO=false) — control repo
+          # main-only, mode agent tak pernah tercapai.
+          if [ "$APPLICATION_REPO" = "true" ] && [ "$BASE_REF" != "develop" ]; then
+            echo "::error::branch agent/* wajib target develop (§44); staging/main via promosi berurutan, bukan lompati develop"
+            echo "mode=wrong-base" >> "$GITHUB_OUTPUT"
             exit 1
           fi
           echo "mode=agent" >> "$GITHUB_OUTPUT"
@@ -114,13 +130,16 @@ jobs:
           MODE: ${{ steps.scope.outputs.mode }}
           TASK_ID: ${{ steps.scope.outputs.task_id }}
           HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           set -u
           case "$MODE" in
             agent)       msg="branch agent '$HEAD_REF' (task $TASK_ID) — batas path divalidasi terhadap contract" ;;
+            planning)    msg="branch '$HEAD_REF' pola worktree-* — planning/dokumentasi, tanpa contract, lolos (H-02)" ;;
             non-agent)   msg="branch '$HEAD_REF' bukan agent/* — validasi batas path tidak berlaku, lolos" ;;
             merge-group) msg="event merge_group — batas path sudah divalidasi pada PR untuk commit ini" ;;
             malformed)   msg="branch '$HEAD_REF' mengaku agent/* tetapi tidak mengikuti pola §44 — DITOLAK" ;;
+            wrong-base)  msg="branch agent '$HEAD_REF' menargetkan '$BASE_REF', wajib develop (§44) — DITOLAK (H-01)" ;;
             *)           msg="lingkup tidak dapat ditentukan — perlakukan sebagai gagal" ;;
           esac
           echo "path-enforcement: $msg"
