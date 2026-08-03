@@ -60,8 +60,19 @@ find_secrets() {
 on_create() {
   local worktree="$1"
   [ -z "$worktree" ] && exit 0
-  if secrets=$(find_secrets "$worktree"); then
-    deny "worktree $worktree memuat berkas secret; pembuatan dibatalkan: $(echo "$secrets" | head -3 | tr '\n' ' ')"
+
+  # Buat worktree dulu — EnterWorktree butuh direktori sudah ada.
+  local branch="agent/${NAME:-worktree}"
+  local ref="${GIT_BASE_REF:-main}"
+  if [ -n "${CWD:-}" ] && [ -n "${NAME:-}" ]; then
+    git -C "$CWD" worktree add -b "$branch" "$worktree" "$ref" 2>/dev/null || true
+  fi
+
+  if [ -d "$worktree" ]; then
+    if secrets=$(find_secrets "$worktree"); then
+      git -C "${CWD:-.}" worktree remove --force "$worktree" 2>/dev/null || true
+      deny "worktree $worktree memuat berkas secret; pembuatan dibatalkan: $(echo "$secrets" | head -3 | tr '\n' ' ')"
+    fi
   fi
   echo "$worktree"
   exit 0
@@ -138,9 +149,16 @@ fi
 PAYLOAD="$(cat 2>/dev/null || true)"
 EVENT=""
 WORKTREE=""
+NAME=""
 if [ -n "$PAYLOAD" ] && command -v jq >/dev/null 2>&1; then
   EVENT=$(jq -r '.hook_event_name // ""' <<<"$PAYLOAD" 2>/dev/null || true)
-  WORKTREE=$(jq -r '.worktree_path // .cwd // ""' <<<"$PAYLOAD" 2>/dev/null || true)
+  WORKTREE=$(jq -r '.worktree_path // ""' <<<"$PAYLOAD" 2>/dev/null || true)
+  NAME=$(jq -r '.name // ""' <<<"$PAYLOAD" 2>/dev/null || true)
+  CWD=$(jq -r '.cwd // ""' <<<"$PAYLOAD" 2>/dev/null || true)
+fi
+# WorktreeCreate: path belum ada, konstruksi dari cwd + .claude/worktrees/ + name
+if [ "$EVENT" = "WorktreeCreate" ] && [ -z "$WORKTREE" ] && [ -n "$NAME" ] && [ -n "$CWD" ]; then
+  WORKTREE="$CWD/.claude/worktrees/$NAME"
 fi
 EVENT="${EVENT:-${CLAUDE_HOOK_EVENT:-}}"
 WORKTREE="${WORKTREE:-${CLAUDE_WORKTREE_PATH:-}}"
