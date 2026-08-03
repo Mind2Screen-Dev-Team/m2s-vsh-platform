@@ -98,7 +98,7 @@ verify-schemas:
 ## intinya: ia gagal bila dua role disalin-tempel tanpa dibedakan.
 .PHONY: verify-agents
 verify-agents:
-	go test ./internal/contract/ -run 'TestEveryRoleHasAgentTemplate|TestAgentFrontmatterFieldsAreSupported|TestAgentNameMatchesFileName|TestNoAgentHasAgentTool|TestReadOnlyRolesHaveNoWriteTools|TestWriterRolesDeclareWorktreeIsolation|TestForbiddenPathBaselinePresent|TestEveryRoleHasEffort|TestDeployedAgentsMatchTemplates|TestAgentBoundariesAreDistinct' -v 2>&1 \
+	go test ./internal/contract/ -run 'TestEveryRoleHasAgentTemplate|TestAgentFrontmatterFieldsAreSupported|TestAgentNameMatchesFileName|TestNoAgentHasAgentTool|TestReadOnlyRolesHaveNoWriteTools|TestWriterRolesDeclareWorktreeIsolation|TestForbiddenPathBaselinePresent|TestEveryRoleHasEffort|TestArchitectureConstraintsPresent|TestDeployedAgentsMatchTemplates|TestAgentBoundariesAreDistinct' -v 2>&1 \
 		| grep -E '^(--- )?(PASS|FAIL|ok)' || true
 	@echo "ok  13 definisi agent terverifikasi"
 
