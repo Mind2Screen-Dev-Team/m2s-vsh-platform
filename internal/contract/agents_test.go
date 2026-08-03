@@ -297,9 +297,10 @@ func TestEveryRoleHasEffort(t *testing.T) {
 // lintas platform. Konsekuensinya konsistensi harus dijaga test — tanpa ini
 // keduanya menyimpang diam-diam.
 func TestDeployedAgentsMatchTemplates(t *testing.T) {
-	// Q10: control repository hanya menjalankan dua role. Sebelas sisanya
-	// di-deploy ke repo pilot pada Phase 7 (§63).
-	want := []string{"project-manager", "technical-lead-system-analyst"}
+	// Q10: control repository menjalankan PM + TL/SA (Phase 1). Phase 5
+	// (§61) menambah frontend-engineer + technical-writer untuk tool pilot.
+	// Sepuluh sisanya di-deploy ke repo aplikasi pada Phase 7 (§63).
+	want := []string{"frontend-engineer", "project-manager", "technical-lead-system-analyst", "technical-writer"}
 
 	deployed := deployedAgentDir(t)
 	entries, err := os.ReadDir(deployed)
