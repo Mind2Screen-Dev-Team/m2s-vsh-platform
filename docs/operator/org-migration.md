@@ -284,4 +284,5 @@ pasca-transfer (#4) adalah penjaga agar ini tak perlu.
 - Update `docs/operator/branch-protection.md`: ganti `fajarcandraaa/` → org di
   seluruh contoh.
 - Hapus repo probe `m2s-vsh-rules-probe` bila selesai.
-- Phase 5 (§61 Tool Pilot) bisa mulai — tidak lagi terblokir oleh kepemilikan org.
+- Phase 5 (§61 Tool Pilot) — **SELESAI** (PR #11, 3 Agustus 2026). 6 skill
+  terinstal, 2 agent baru, Mneme warn mode, DESIGN.md tersedia.

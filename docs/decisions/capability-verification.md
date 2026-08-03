@@ -245,8 +245,8 @@ Dicatat sebagai **D-02**.
 | jq | 1.7.1-apple | ✅ |
 | gh | 2.96.0 | ✅ auth `fajarcandraaa`, scope `gist, read:org, repo` |
 | Homebrew | 6.0.13 | ✅ |
-| Ponytail | — | ⬜ belum dipasang (Phase 5 §61) |
-| Mneme | — | ⬜ belum dipasang (Phase 5 §61) |
+| Ponytail | env-var di `.claude/settings.json` | ✅ terpasang — warn mode, matcher 8 role (Phase 5 §61) |
+| Mneme | `.mneme/project_memory.json` | ✅ terpasang — 8 ADR, warn mode, owner TL/SA (Phase 5 §61) |
 
 `~/.claude/` tidak memiliki `agents/` maupun `CLAUDE.md`. Tidak ada konfigurasi
 global yang berpotensi bertabrakan dengan konfigurasi project.
