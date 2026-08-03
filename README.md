@@ -1,7 +1,7 @@
 # M2S-VSH Platform — Control Repository
 
 **Versi arsitektur:** 0.1.0
-**Status:** Phase 0 — Baseline
+**Status:** Phase 5 (§61)
 **Execution engine:** Claude Code Native
 **Bahasa komunikasi agent:** Bahasa Indonesia (identifier, kode, dan API field tetap mengikuti source of truth)
 
@@ -136,7 +136,7 @@ ditimpa ADR.
 | 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ✅ selesai |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ✅ selesai |
 | 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | 🟡 **selesai sebagian** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #8) — prasyarat merge kini terpenuhi via ADR-008 + ADR-001 #5 (App + ruleset + review); merge queue menyusul |
-| 5 | Tool Pilot — Ponytail & Mneme project-scoped | §61 | ⬜ |
+| 5 | Tool Pilot — 6 skill, 2 agent, Mneme warn, DESIGN.md | §61 | ✅ **selesai** (PR #11, 3 Agustus 2026) |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ |
 | 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ⬜ |
 | 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ⬜ |

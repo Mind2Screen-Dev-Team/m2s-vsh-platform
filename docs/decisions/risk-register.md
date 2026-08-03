@@ -211,12 +211,16 @@ changed-path validation.
 
 ---
 
-### R-14 🟡 Mneme memory dimodifikasi consumer
+### R-14 🟢 Mneme memory dimodifikasi consumer
 
 §6.5 melarang engineering mengedit `project_memory.json`. Mengeditnya berarti
 melemahkan gate governance.
 
 **Mitigasi:** `permissions.deny` + CODEOWNERS ke TL/SA + CI diff check.
+
+**Status:** 🟢 **TERTANGANI (Phase 5, 3 Agustus 2026).** `.mneme/project_memory.json`
+aktif dengan 8 ADR; `settings.json` deny `Edit(.mneme/project_memory.json)` +
+`Write(.mneme/project_memory.json)`. Engineering agent tidak bisa menulisnya.
 
 ---
 
@@ -284,6 +288,8 @@ memiliki scope admin**.
 ---
 
 ### R-21 🟢 Konflik `DESIGN.md`
+
+§21.5 melarang Frontend mengedit `DESIGN.md`.
 
 Owner UI/UX; Frontend dilarang mengubah (§21.5).
 

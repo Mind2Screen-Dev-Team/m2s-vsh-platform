@@ -82,12 +82,14 @@ terjaga. Audit trail utuh (PR + review + merged_by).
       permanen (impl).
 - [ ] **Clone lokal backend/frontend** masih `behind 2` — pull keputusan user
       (clone aktif). Remote sudah `Mind2Screen-Dev-Team/...`.
-- [ ] **Phase 5 (§61 Tool Pilot)** — bisa mulai; tak terblokir kepemilikan org.
-      Fondasi: worker buka PR, approver review-merge.
+- [x] **Phase 5 (§61 Tool Pilot)** — **SELESAI** (PR #11, 3 Agustus 2026).
+      6 skill terinstal (stop-slop, ui-ux-pro-max, emilkowalski, Ponytail, Mneme,
+      DESIGN.md), 2 agent baru (frontend-engineer, technical-writer),
+      `.mneme/project_memory.json` aktif (warn mode), `design/DESIGN.md` tersedia.
 - [ ] Bila `platform` (control) punya branch `develop`/`staging` di waktu depan,
       ruleset `agent-*` jadi aktif otomatis.
 
 ## Catatan pemeliharaan
 
-Posisi final 2 Agustus 2026. Perbarui bila konfigurasi ruleset/proteksi/repo
-berubah.
+Posisi final 3 Agustus 2026 (Phase 5 §61 selesai via PR #11). Perbarui bila
+konfigurasi ruleset/proteksi/repo berubah.
