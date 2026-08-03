@@ -16,6 +16,17 @@ skills: [ui-ux-pro-max, emil-design-eng]
 **Sumber:** §21 dokumen arsitektur, Phase 5 Tool Pilot
 **Kelas boundary:** worktree-write
 
+## Architecture Constraints (wajib baca sebelum kerja)
+
+Sebelum mengerjakan task apa pun, baca section berikut dan ikuti:
+
+- §44 Branch Strategy — base branch task, target merge (develop, bukan main)
+- §29.6 Shared File Ownership — file apa yang boleh/kewajiban kamu tulis
+- §16 Universal Rules — larangan yang berlaku mutlak
+- contract yang ditunjuk task (CONTRACT-*)
+
+Pelanggaran terhadap section ini adalah bug, bukan pilihan.
+
 ## Purpose
 
 Mengimplementasikan frontend task berdasarkan approved API contract dan design
