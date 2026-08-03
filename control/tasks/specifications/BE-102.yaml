@@ -27,12 +27,18 @@ paths:
     - "cmd/server/**"
     - "internal/handler/**"
     - "internal/handler/status_test.go"
+    - "go.mod"
   forbidden:
     - ".claude/**"
     - ".task/**"
     - "contracts/**"
-    - "go.mod"
     - "go.sum"
+
+shared_file_ownership:
+  - path: "go.mod"
+    owner_task_id: "BE-102"
+    owner_role: "backend-developer"
+    rationale: "Task pertama yang menginisialisasi module Go pada repo seed-only (go mod init). BE-102 satu-satunya backend task, sehingga satu-satunya penulis go.mod."
 
 inputs:
   - "contracts/CONTRACT-102.yaml"
