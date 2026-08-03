@@ -2,7 +2,7 @@
 
 **Tanggal:** 2026-08-03
 **Arsitektur:** §63 M2S-VSH Lite v0.1.0
-**Status:** planning
+**Status:** ✅ **selesai** (3 Agustus 2026)
 
 ## Ringkasan
 
@@ -57,8 +57,34 @@ Non-overlap: beda repositori = beda filesystem. Masing-masing repo hanya satu wr
 
 ## Prasyarat Eksekusi
 
-- [ ] Backend repo up-to-date
-- [ ] Frontend repo up-to-date
-- [ ] `make build` di control repo (runner binary)
-- [ ] `make verify` green
-- [ ] Runner `bin/m2s` ada dan tervalidasi
+- [x] Backend repo up-to-date
+- [x] Frontend repo up-to-date
+- [x] `make build` di control repo (runner binary)
+- [x] `make verify` green
+- [x] Runner `bin/m2s` ada dan tervalidasi
+
+## Hasil (3 Agustus 2026)
+
+| Repo | PR | Isi | Merged |
+|---|---|---|---|
+| control | #16 | planning (contract + 4 specs + 4 ADR) | ✅ |
+| control | #17 | QA-102 report (PASS 5/5) | ✅ |
+| control | #18 | BE-102 contract fix (go.mod shared file) | ✅ |
+| control | #19 | BE-102-fix spec (CORS task) | ✅ |
+| control | #20 | FE-102 contract fix (scaffold files) | ✅ |
+| backend | #9 | status endpoint | ✅ |
+| backend | #11 | CORS header fix | ✅ |
+| frontend | #5 | StatusCard + /status | ✅ |
+
+**Verifikasi live:** `GET /api/v1/status` → HTTP 200, CORS header `*`, `go test -race` PASS.
+
+### Acceptance criteria §63 — terpenuhi
+- Backend + Frontend berjalan paralel dengan contract yang sama ✅
+- Tanpa overlap path (BE `internal/handler/`, FE `src/components/`) ✅
+- QA acceptance + integration PASS ✅
+
+### Catatan proses (learning Phase 7)
+- Contract awal terlalu ketat (forbid `go.mod`/`layout.tsx` yang scaffolding wajib) → 3 PR fix contract
+- Branch planning awalnya `agent/*` → harus `worktree-*` (2 PR rename)
+- Semua PR ke main langsung, bukan `develop→staging→main` — menjadi dasar hardening H-01/H-08
+- Hardening blueprint: `docs/architecture/phase-8-hardening.md`

@@ -2,7 +2,7 @@
 
 **ID:** PILOT-1
 **Phase:** 7 (§63)
-**Status:** pending — planning
+**Status:** ✅ done — 3 Agustus 2026 (9 PR merged)
 **Created:** 2026-08-03
 
 ## Feature: System Status
@@ -33,7 +33,7 @@ CONTRACT-102 → BE-102 + FE-102 (parallel) → QA-102 → Code Review → merge
 
 ## Acceptance Criteria
 
-1. Backend dan Frontend berjalan paralel dengan contract yang sama
-2. Tidak ada overlap path antara BE-102 dan FE-102
-3. QA-102 acceptance test lulus
-4. `make verify` hijau di control repo
+- [x] 1. Backend dan Frontend berjalan paralel dengan contract yang sama
+- [x] 2. Tidak ada overlap path antara BE-102 dan FE-102
+- [x] 3. QA-102 acceptance test lulus (PASS 5/5)
+- [x] 4. `make verify` hijau di control repo
