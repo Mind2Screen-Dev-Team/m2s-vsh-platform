@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/contract"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/pathmatch"
 	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/registry"
 )
 
@@ -26,6 +27,70 @@ func setup(control string) (*contract.Validator, *registry.Registry, error) {
 		return nil, nil, err
 	}
 	return v, reg, nil
+}
+
+// scaffoldFiles mendaftar berkas yang scaffolding sebuah stack PASTI hasilkan.
+//
+// H-03 (phase-8-hardening.md): Phase 7 menulis contract yang melarang go.mod
+// dan src/app/layout.tsx, padahal `go mod init` dan `create-next-app` wajib
+// membuatnya. Agent lalu berada di antara menaati contract atau menyelesaikan
+// task, dan keduanya salah. Daftar ini membuat contract semacam itu ditolak
+// sebelum agent mulai.
+var scaffoldFiles = map[string][]string{
+	"go":     {"go.mod"},
+	"nextjs": {"src/app/layout.tsx", "src/app/globals.css"},
+}
+
+// checkScaffoldRealism memeriksa paths contract terhadap execution.scaffold.
+//
+// Opt-in: task tanpa execution.scaffold bukan task scaffolding dan tidak
+// diperiksa, sehingga task pada repo yang sudah berdiri tetap boleh melarang
+// go.mod — itu batas yang benar di sana.
+//
+// Mengembalikan daftar pelanggaran; kosong berarti lolos.
+func checkScaffoldRealism(task map[string]any) []string {
+	stack := str(task, "execution.scaffold")
+	if stack == "" {
+		return nil
+	}
+	want, ok := scaffoldFiles[stack]
+	if !ok {
+		return nil // enum schema sudah membatasi nilainya
+	}
+
+	allowed := strSlice(task, "paths.allowed")
+	forbidden := strSlice(task, "paths.forbidden")
+
+	var out []string
+	for _, f := range want {
+		// IsAllowed sekaligus menutup dua bentuk kegagalan: berkas tidak
+		// tercakup allowed, dan berkas tercakup allowed tetapi ditutup
+		// forbidden (forbidden mengalahkan allowed, matriks §4.8).
+		if !pathmatch.IsAllowed(f, allowed, forbidden) {
+			out = append(out, fmt.Sprintf(
+				"scaffolding %s wajib menghasilkan %s, tetapi paths contract tidak mengizinkannya — agent akan terjepit antara menaati contract dan menyelesaikan task (H-03, §29.6)",
+				stack, f))
+		}
+	}
+	return out
+}
+
+// checkContractIDsExist memastikan tiap contract_ids yang dirujuk benar-benar
+// ada sebagai spec di control repository.
+//
+// H-05/H-06: task yang menunjuk contract hilang lolos launch, lalu agent
+// bekerja tanpa dokumen yang seharusnya mengikatnya.
+func checkContractIDsExist(task map[string]any, control string) []string {
+	var out []string
+	for _, id := range strSlice(task, "task.contract_ids") {
+		p := filepath.Join(control, "control", "tasks", "specifications", id+".yaml")
+		if _, err := os.Stat(p); err != nil {
+			out = append(out, fmt.Sprintf(
+				"contract_ids memuat %s, tetapi %s tidak ada — task tidak boleh mulai tanpa contract yang dirujuknya (H-06)",
+				id, p))
+		}
+	}
+	return out
 }
 
 // --- validate-task ---
@@ -66,6 +131,16 @@ func cmdValidateTask(args []string) int {
 		reportViolations("task ditolak", []string{
 			"ownership.base_branch = main — agent tidak boleh menargetkan main (ADR-001 #2)",
 		})
+		return exitViolation
+	}
+
+	// H-03 + H-05: pemeriksaan pra-launch. Contract yang sudah pasti membuat
+	// task gagal ditolak SEBELUM agent mulai, bukan setelah kerja habis di CI.
+	var violations []string
+	violations = append(violations, checkScaffoldRealism(doc)...)
+	violations = append(violations, checkContractIDsExist(doc, control)...)
+	if len(violations) > 0 {
+		reportViolations("task ditolak", violations)
 		return exitViolation
 	}
 
@@ -254,6 +329,53 @@ func cmdLaunchTask(args []string) int {
 			return fail(exitViolation,
 				"%s menuntut platform %s, sedangkan runner berjalan pada %s",
 				taskID, want, runtime.GOOS)
+		}
+	}
+
+	// ── Preflight Phase 8 ────────────────────────────────────────────────
+	//
+	// Seluruhnya mendahului reservasi dan `git worktree add`, mengikuti pola
+	// pemeriksaan platform di atas: penolakan tidak boleh meninggalkan worktree
+	// yatim yang harus dibersihkan manual.
+
+	// H-07: gate TL/SA. `technical-ready` adalah status §33 yang menandai
+	// analisis teknis selesai dan disetujui — sign-off yang blueprint sebut
+	// `approved`. Nilai itu tidak ada pada enum taskStatus, dan menambahkannya
+	// akan meriakkan perubahan ke seluruh spec, test enum, dan dokumen state
+	// machine tanpa menambah penegakan.
+	if st := str(task, "task.status"); st != "technical-ready" {
+		return fail(exitViolation,
+			"%s berstatus %s — launch menuntut technical-ready sebagai sign-off TL/SA (H-07, §33)",
+			taskID, st)
+	}
+
+	// H-06: contract yang dirujuk wajib ada. Lapis kedua — validate-task
+	// memeriksa hal yang sama, tetapi launch tidak boleh bergantung pada
+	// pemanggil yang menjalankannya lebih dulu.
+	if v := checkContractIDsExist(task, control); len(v) > 0 {
+		reportViolations(fmt.Sprintf("launch %s ditolak", taskID), v)
+		return exitViolation
+	}
+
+	// H-03 lapis kedua, alasan yang sama.
+	if v := checkScaffoldRealism(task); len(v) > 0 {
+		reportViolations(fmt.Sprintf("launch %s ditolak", taskID), v)
+		return exitViolation
+	}
+
+	// H-05: base branch wajib ada di repo target. Diperiksa di sini, bukan di
+	// validate-task, karena hanya launch yang menerima -repo — validate-task
+	// tidak tahu di mana repository berada.
+	//
+	// Dijalankan runner, bukan agent, sehingga blocklist Bash agent tidak
+	// berlaku — pola yang sama dipakai `git worktree add` di bawah.
+	if base := str(task, "ownership.base_branch"); base != "" {
+		cmd := exec.Command("git", "-C", *repoPath, "show-ref", "--verify",
+			"refs/heads/"+base)
+		if err := cmd.Run(); err != nil {
+			return fail(exitViolation,
+				"base_branch %s tidak ada di %s — worktree tidak dapat dicabangkan dari branch yang belum ada (H-05)",
+				base, *repoPath)
 		}
 	}
 
