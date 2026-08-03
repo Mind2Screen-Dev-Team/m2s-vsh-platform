@@ -1,0 +1,56 @@
+# FE-102 — Task Contract: Frontend StatusCard
+
+schema_version: "1.0"
+
+task:
+  id: "FE-102"
+  title: "Implementasi StatusCard component + halaman status di Next.js"
+  type: "frontend-implementation"
+  project: "pilot-phase-7"
+  status: "pending"
+  contract_ids: ["CONTRACT-102"]
+
+ownership:
+  role: "frontend-engineer"
+  repository: "m2s-vsh-project-frontend"
+  base_branch: "main"
+  branch: "agent/FE-102-status-card"
+
+execution:
+  isolation: "worktree"
+  background: true
+  max_turns: 100
+  timeout_minutes: 60
+
+paths:
+  allowed:
+    - "src/components/StatusCard/**"
+    - "src/app/status/**"
+  forbidden:
+    - ".claude/**"
+    - ".task/**"
+    - "design/**"
+    - "package.json"
+    - "package-lock.json"
+
+inputs:
+  - "contracts/CONTRACT-102.yaml"
+
+acceptance_criteria:
+  - "StatusCard merender status, version, uptime dari API response"
+  - "Halaman /status memanggil GET /api/v1/status"
+  - "Loading state ditampilkan sebelum response diterima"
+  - "Error state ditampilkan bila request gagal"
+
+quality_gates:
+  - "npm run build"
+  - "npm run lint"
+
+outputs:
+  - "code"
+  - "unit-tests"
+  - "pull-request"
+
+stop_conditions:
+  - "StatusCard selesai dengan loading/error/success state"
+  - "npm run build lulus tanpa error"
