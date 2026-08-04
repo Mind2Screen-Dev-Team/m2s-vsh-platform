@@ -2,7 +2,15 @@
 
 **Tanggal:** 2026-08-03
 **Decider:** UI/UX
-**Status:** approved
+**Status:** superseded (4 Agustus 2026) — Phase 6 dijalankan sebagai design infra
+
+> **Superseded.** Keputusan skip di bawah berlaku untuk konteks Phase 7: fitur
+> pilot StatusCard statis sehingga tidak butuh design handoff. Pada 4 Agustus
+> 2026 Phase 6 dijalankan dengan objek berbeda — bukan design untuk sebuah fitur,
+> melainkan **design workflow infra**: struktur `design/`, handoff flow formal,
+> dan bukti isolasi design dari application worktree (§62 kriteria Done).
+> Lihat [`docs/operator/phase-6-open-design.md`](../operator/phase-6-open-design.md).
+> Alasan skip di bawah tetap sahih sebagai catatan historis.
 
 ## Context
 
