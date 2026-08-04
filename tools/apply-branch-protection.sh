@@ -9,10 +9,13 @@
 # bekerja (200).
 #
 # Yang dipasang pada main:
-#   - required_status_checks: path-enforcement (strict). PR agent/* → main TIDAK
-#     memicu workflow (trigger [develop, staging]), sehingga check ini tak pernah
-#     hijau → PR tak bisa merge. Ini menutup celah H-01 di main (Phase 8 A7:
-#     PR dummy backend terbukti BLOCKED setelah protection aktif).
+#   - required_status_checks: validate-changed-paths (strict) — nama job
+#     workflow = nama check (check-github-artifacts.sh aturan #3). PR agent/* →
+#     main TIDAK memicu workflow (trigger [develop, staging]), sehingga check ini
+#     tak pernah hijau → PR tak bisa merge. Ini menutup celah H-01 di main
+#     (Phase 8 A7: PR dummy backend terbukti BLOCKED setelah protection aktif).
+#     JANGAN tulis "path-enforcement" di sini — itu nama workflow, bukan nama
+#     check; context harus nama JOB.
 #   - allow_force_pushes: false, allow_deletions: false — main dilindungi.
 #
 # Jalankan sebagai MANUSIA dengan token admin: `gh auth refresh -s admin:org,repo`
@@ -35,7 +38,7 @@ REPOS=(
 )
 
 PAYLOAD='{
-  "required_status_checks": {"strict": true, "contexts": ["path-enforcement"]},
+  "required_status_checks": {"strict": true, "contexts": ["validate-changed-paths"]},
   "required_pull_request_reviews": {"required_approving_review_count": 0},
   "enforce_admins": false,
   "allow_force_pushes": false,

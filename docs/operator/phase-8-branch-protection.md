@@ -27,7 +27,11 @@ Bukan soal token/script/payload.
 
 Tersedia di plan Free. Dipasang pada `main` di 3 repo:
 
-- **required_status_checks:** `path-enforcement` (strict)
+- **required_status_checks:** `validate-changed-paths` (strict) — nama JOB
+  workflow = nama check yang dituntut (check-github-artifacts.sh aturan #3:
+  "nama job validate-changed-paths ADALAH nama required check"). Jangan tulis
+  `path-enforcement` di sini; context yang salah membuat PR tetap BLOCKED
+  walau check lulus (nama tak cocok).
 - **allow_force_pushes:** false
 - **allow_deletions:** false
 - **enforce_admins:** false
