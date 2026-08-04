@@ -2,7 +2,8 @@
 #
 # Memasang ruleset agent-push-restriction (bypass m2s-approver) + ruleset
 # agent-worker-restriction (kunci develop/staging dari push langsung worker)
-# pada 3 repo org. ADR-008 §Langkah ADR-001 #5, V-10.
+# + main-agent-block (kunci main dari head agent/*, H-01 Phase 8) pada 3 repo
+# org. ADR-008 §Langkah ADR-001 #5, V-10.
 #
 # Jalankan sebagai MANUSIA (admin org). Membutuhkan token gh dengan scope
 # `repo`; ruleset POST adalah aksi yang tak boleh dilakukan agent (R-20).
@@ -39,6 +40,15 @@ for repo in "${REPOS[@]}"; do
   sed "s/\"actor_id\": 0/\"actor_id\": $M2S_APPROVER_ID/" "$WORKER_RS" \
     | gh api -X POST "repos/$repo/rulesets" --input - >/dev/null
   echo "  + agent-worker-restriction (approver = always, bypass)"
+  # main-agent-block (Phase 8, H-01): kunci main dari PR head agent/*.
+  # Workflow path-enforcement trigger-nya [develop, staging], sehingga PR
+  # agent/* → main TIDAK memicu CI sama sekali — tanpa check, tanpa tolak.
+  # Ruleset ini menutup celah: rule update (non-fast-forward) menolak merge
+  # branch agent/* ke main di level GitHub, tak tergantung workflow (Phase 8
+  # A7 menemukan celah ini; test dummy PR #14 backend ter-bukti mergeable).
+  sed "s/\"actor_id\": 0/\"actor_id\": $M2S_APPROVER_ID/" "$ROOT/templates/github/rulesets/main-agent-block.json" \
+    | gh api -X POST "repos/$repo/rulesets" --input - >/dev/null
+  echo "  + main-agent-block (main × head agent/*, H-01)"
 done
 
 echo "Selesai. Verifikasi: gh api repos/<repo>/rulesets --jq '.[] | {name, enforcement, bypass_actors}'"
