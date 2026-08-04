@@ -1,0 +1,32 @@
+{
+  "name": "main-agent-block",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main"],
+      "exclude": []
+    },
+    "head_ref_name": {
+      "include": ["refs/heads/agent/*"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "update"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_type": "Integration",
+      "actor_id": 0,
+      "bypass_mode": "always"
+    },
+    {
+      "actor_type": "OrganizationAdmin",
+      "actor_id": null,
+      "bypass_mode": "pull_request"
+    }
+  ]
+}
