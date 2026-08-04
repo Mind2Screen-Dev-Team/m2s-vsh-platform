@@ -1,32 +1,18 @@
 {
+  "_comment": "DINONAKTIFKAN — ruleset butuh plan GitHub Team, org ini plan Free.",
+  "_status": "archived",
+  "_pengganti": "tools/apply-branch-protection.sh — classic branch protection pada main (required check path-enforcement) menutup celah H-01 yang ruleset ini dirancang untuk tutup, tanpa butuh plan berbayar.",
+  "_bukti": "Phase 8 A7: POST ruleset apa pun di plan Free -> HTTP 500 'Upgrade to GitHub Team to enable this feature'. Ruleset Phase 4 (agent-push-restriction, agent-worker-restriction) juga kosong (rules: null) sejak awal karena tak pernah berhasil.",
+  "_riwayat": "Dibuat sebagai main-agent-block: target main x head agent/*, rule update, bypass Integration + OrganizationAdmin. Tak dapat dipasang di plan Free.",
   "name": "main-agent-block",
   "target": "branch",
-  "enforcement": "active",
+  "enforcement": "disabled",
   "conditions": {
-    "ref_name": {
-      "include": ["refs/heads/main"],
-      "exclude": []
-    },
-    "head_ref_name": {
-      "include": ["refs/heads/agent/*"],
-      "exclude": []
-    }
+    "ref_name": { "include": ["refs/heads/main"], "exclude": [] },
+    "head_ref_name": { "include": ["refs/heads/agent/*"], "exclude": [] }
   },
-  "rules": [
-    {
-      "type": "update"
-    }
-  ],
+  "rules": [ { "type": "update" } ],
   "bypass_actors": [
-    {
-      "actor_type": "Integration",
-      "actor_id": 0,
-      "bypass_mode": "always"
-    },
-    {
-      "actor_type": "OrganizationAdmin",
-      "actor_id": null,
-      "bypass_mode": "pull_request"
-    }
+    { "actor_type": "OrganizationAdmin", "actor_id": null, "bypass_mode": "pull_request" }
   ]
 }
