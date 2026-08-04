@@ -1,0 +1,41 @@
+# Handoff Contract — DESIGN-1
+
+Kontrak antara design workspace (ui-ux-designer) dan implementasi frontend
+(frontend-engineer). Bukan task contract runner — referensi silang ke task
+contract FE ada field `fe_task`.
+
+```yaml
+schema_version: "1.0"
+handoff:
+  id: DESIGN-1
+  title: System Status screen
+  repository: m2s-vsh-project-frontend
+  status: draft              # draft → approved setelah PM + TL/SA review
+  owner_role: ui-ux-designer
+  consumer_role: frontend-engineer
+  fe_task: FE-DESIGN-1       # referensi silang ke task contract sync/implement
+  inputs:
+    - design/DESIGN.md
+    - design/tokens/tokens.md
+    - design/flows/system-status-flow.md
+    - design/wireframes/status-screen-wireframe.md
+    - design/prototypes/status-screen.html
+    - contract: GET /api/v1/status
+  components:
+    - StatusCard
+  states:
+    - loading
+    - success
+    - degraded
+    - error
+    - unknown
+  responsive_breakpoints:
+    - "<640"
+    - "640-1024"
+    - ">1024"
+  accessibility:
+    - contrast-aa
+    - prefers-reduced-motion
+    - aria-live-polite (opsional)
+  approved_by: []            # PM, TL/SA
+```

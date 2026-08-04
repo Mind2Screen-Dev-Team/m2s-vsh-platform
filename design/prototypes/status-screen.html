@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!--
+  Prototype — System Status Screen
+  design/prototypes/status-screen.html
+
+  Artifact Open Design. STATIS, standalone, tanpa build step. Ia bukan kode
+  aplikasi: repo frontend mengimplementasikan ulang di src/**, bukan menyalin
+  file ini. Tujuan: preview visual token DESIGN.md sebelum implementasi.
+
+  Token sumber: design/DESIGN.md + design/tokens/tokens.md
+-->
+<html lang="id" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — System Status</title>
+<style>
+  :root {
+    --bg-primary: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --border-default: #E2E8F0;
+    --accent-success: #059669;
+    --accent-warning: #D97706;
+    --accent-danger: #DC2626;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --radius-md: 0.5rem;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  [data-theme="dark"] {
+    --bg-primary: #0F172A;
+    --bg-surface: #1E293B;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #475569;
+    --border-default: #334155;
+    --accent-success: #10B981;
+    --accent-warning: #F59E0B;
+    --accent-danger: #EF4444;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+    padding: var(--space-6);
+  }
+  h1 { font-size: 1.5rem; font-weight: 600; line-height: 1.2; margin: 0; }
+  h2 {
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin: 0 0 var(--space-2);
+  }
+
+  .grid { display: grid; gap: var(--space-6); width: 100%; max-width: 28rem; }
+
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-5);
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    font-weight: 600;
+  }
+  .dot { width: 0.75rem; height: 0.75rem; border-radius: 9999px; flex: none; }
+  .dot-ok       { background: var(--accent-success); }
+  .dot-degraded { background: var(--accent-warning); }
+  .dot-unknown  { background: var(--text-muted); }
+
+  .rows { display: grid; gap: var(--space-2); font-size: 0.875rem; color: var(--text-secondary); }
+  .rows b { font-weight: 500; color: var(--text-primary); }
+
+  .loading { color: var(--text-secondary); animation: pulse 1.5s ease-in-out infinite; }
+  .error   { color: var(--accent-danger); }
+
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }
+  @media (prefers-reduced-motion: reduce) { .loading { animation: none } }
+
+  .toggle {
+    position: fixed; top: var(--space-4); right: var(--space-4);
+    background: var(--bg-surface); color: var(--text-primary);
+    border: 1px solid var(--border-default); border-radius: 0.375rem;
+    padding: var(--space-2) var(--space-4); font: inherit; font-size: 0.875rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<button class="toggle" onclick="
+  var r = document.documentElement;
+  r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+">Ganti tema</button>
+
+<h1>System Status</h1>
+
+<div class="grid">
+
+  <section>
+    <h2>Success — status ok</h2>
+    <div class="card">
+      <div class="card-head"><span class="dot dot-ok"></span><span>ok</span></div>
+      <div class="rows">
+        <div><b>Versi:</b> v0.1.0</div>
+        <div><b>Uptime:</b> 3j 12m</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Degraded — status degraded</h2>
+    <div class="card">
+      <div class="card-head"><span class="dot dot-degraded"></span><span>degraded</span></div>
+      <div class="rows">
+        <div><b>Versi:</b> v0.1.0</div>
+        <div><b>Uptime:</b> 41 detik</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Loading</h2>
+    <div class="card"><div class="loading">Memuat status sistem...</div></div>
+  </section>
+
+  <section>
+    <h2>Error</h2>
+    <div class="card"><div class="error">Gagal: Failed to fetch</div></div>
+  </section>
+
+  <section>
+    <h2>Empty / unknown</h2>
+    <div class="card">
+      <div class="card-head"><span class="dot dot-unknown"></span><span>tidak diketahui</span></div>
+      <div class="rows"><div>Status belum tersedia.</div></div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>
