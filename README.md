@@ -1,7 +1,7 @@
 # M2S-VSH Platform — Control Repository
 
 **Versi arsitektur:** 0.1.0
-**Status:** Phase 5 (§61)
+**Status:** Phase 8 (§64) — selesai
 **Execution engine:** Claude Code Native
 **Bahasa komunikasi agent:** Bahasa Indonesia (identifier, kode, dan API field tetap mengikuti source of truth)
 
@@ -39,7 +39,7 @@ dan rulesets hanya tersedia untuk repository public milik organization. Lihat
 | Penghapusan branch diblokir | ✅ | ✅ | ✅ |
 | Wajib lewat pull request | ✅ | ✅ | — |
 | Conversation resolved | ✅ | ✅ | — |
-| Required status checks | 🟡 siap (main human-only merge) | ✅ **aktif** `validate-changed-paths` | 🟡 siap |
+| Required status checks | ✅ **aktif** `validate-changed-paths` (branch protection main) | ✅ **aktif** `validate-changed-paths` | ✅ **aktif** `validate-changed-paths` |
 | Review utk merge (`required_approving_review_count`) | — | ✅ **1** (m2s-approver) | — |
 | CODEOWNERS (jejak audit) | ✅ | ✅ | ✅ |
 | Require code-owner review | ❌ **sengaja mati** — author PR ≠ review | ❌ idem | ❌ idem |
@@ -139,7 +139,7 @@ ditimpa ADR.
 | 5 | Tool Pilot — 6 skill, 2 agent, Mneme warn, DESIGN.md | §61 | ✅ **selesai** (PR #11, 3 Agustus 2026) |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ⬜ **dilewati** ([D-P7-2](docs/decisions/D-P7-2-phase-6-skip.md)) — pilot kecil tak butuh design handoff; dapat dijalankan bila fitur berikut membutuhkan |
 | 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ✅ **selesai** (3 Agustus 2026) — 9 PR: contract, 4 specs, 4 ADR, QA, BE endpoint, CORS, FE StatusCard |
-| 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ➡️ berikutnya — blueprint hardening H-01..08 di [phase-8-hardening](docs/architecture/phase-8-hardening.md) |
+| 8 | Stabilization — pengukuran token, review cycle, escaped defect | §64 | ✅ **selesai** (4 Agustus 2026) — hardening H-01..08 ([phase-8-hardening](docs/architecture/phase-8-hardening.md)), branch protection 3 repo, pengukuran [phase-8-metrics](docs/operator/phase-8-metrics.md) |
 
 ⇄ **Phase 1 dan 2 ditukar** oleh [ADR-003](docs/adr/ADR-003-phase-order-contract-before-agents.md):
 task contract dikerjakan sebelum core agents, karena definisi agent memuat batas path
