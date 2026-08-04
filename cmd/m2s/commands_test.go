@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -56,6 +57,9 @@ type taskOpts struct {
 	allowed  []string
 	shared   string // path shared file; kosong berarti tidak ada
 	platform string // execution.platform; kosong berarti field tidak ditulis
+	status   string // task.status; kosong berarti technical-ready
+	scaffold string // execution.scaffold; kosong berarti field tidak ditulis
+	contract string // satu contract_ids; kosong berarti field tidak ditulis
 }
 
 func writeTask(t *testing.T, dir string, o taskOpts) string {
@@ -72,6 +76,9 @@ func writeTask(t *testing.T, dir string, o taskOpts) string {
 	if o.base == "" {
 		o.base = "develop"
 	}
+	if o.status == "" {
+		o.status = "technical-ready"
+	}
 	if len(o.allowed) == 0 {
 		o.allowed = []string{"internal/payroll/**"}
 	}
@@ -79,13 +86,19 @@ func writeTask(t *testing.T, dir string, o taskOpts) string {
 	var b strings.Builder
 	b.WriteString("schema_version: \"1.0\"\ntask:\n")
 	b.WriteString("  id: " + o.id + "\n  title: uji\n")
-	b.WriteString("  type: " + o.taskType + "\n  project: uji\n  status: technical-ready\n")
+	b.WriteString("  type: " + o.taskType + "\n  project: uji\n  status: " + o.status + "\n")
+	if o.contract != "" {
+		b.WriteString("  contract_ids: [" + o.contract + "]\n")
+	}
 	b.WriteString("ownership:\n  role: " + o.role + "\n  repository: " + o.repo + "\n")
 	b.WriteString("  base_branch: " + o.base + "\n")
 	b.WriteString("  branch: agent/" + o.id + "-uji\n")
 	b.WriteString("execution:\n  isolation: worktree\n")
 	if o.platform != "" {
 		b.WriteString("  platform: " + o.platform + "\n")
+	}
+	if o.scaffold != "" {
+		b.WriteString("  scaffold: " + o.scaffold + "\n")
 	}
 	b.WriteString("  max_turns: 30\n  timeout_minutes: 45\n")
 	b.WriteString("paths:\n  allowed:\n")
@@ -107,6 +120,26 @@ func writeTask(t *testing.T, dir string, o taskOpts) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+// initGitRepo menyiapkan repository git nyata dengan satu commit pada base.
+//
+// Preflight H-05 memeriksa `git show-ref refs/heads/<base>` sebelum worktree
+// dibuat, jadi test launch yang berharap lolos preflight wajib repo dengan
+// branch base yang benar-benar ada. Repo non-git kini gagal di preflight,
+// bukan di `git worktree add`.
+func initGitRepo(t *testing.T, dir, base string) {
+	t.Helper()
+	for _, args := range [][]string{
+		{"init", "-b", base},
+		{"-c", "user.email=uji@m2s.test", "-c", "user.name=uji", "commit",
+			"--allow-empty", "-m", "awal"},
+	} {
+		cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
 }
 
 func writeHandoff(t *testing.T, dir, taskID string) string {
@@ -356,6 +389,7 @@ func TestCmdLaunchTaskAcceptsMatchingPlatform(t *testing.T) {
 			root := controlFixture(t)
 			dir := t.TempDir()
 			repo := t.TempDir()
+			initGitRepo(t, repo, "develop")
 			silence(t)
 			t.Setenv("M2S_WORKTREE_ROOT", t.TempDir())
 
@@ -481,5 +515,144 @@ func TestCmdReleaseReservation(t *testing.T) {
 	// Task yang tidak ada.
 	if code := cmdReleaseReservation([]string{"-control", root, "-task-id", "BE-999", "-by", "runner"}); code != exitError {
 		t.Errorf("task tidak ada = exit %d, mau %d", code, exitError)
+	}
+}
+
+// --- Phase 8 hardening ---
+
+// TestCmdValidateTaskRejectsScaffoldForbidden menegakkan H-03.
+//
+// Contract Phase 7 melarang go.mod dan src/app/layout.tsx padahal scaffolding
+// wajib membuatnya. Ditolak sebelum agent mulai, bukan setelah CI gagal.
+func TestCmdValidateTaskRejectsScaffoldForbidden(t *testing.T) {
+	root := controlFixture(t)
+	dir := t.TempDir()
+	silence(t)
+
+	// writeTask selalu menulis go.mod pada forbidden, sehingga stack go
+	// otomatis melanggar.
+	goTask := writeTask(t, dir, taskOpts{id: "BE-201", scaffold: "go"})
+	if code := cmdValidateTask([]string{"-control", root, "-task", goTask}); code != exitViolation {
+		t.Errorf("scaffold go dengan go.mod forbidden = exit %d, mau %d (H-03)", code, exitViolation)
+	}
+
+	nextTask := writeTask(t, dir, taskOpts{
+		id: "FE-201", repo: "proyek-frontend", role: "frontend-engineer",
+		taskType: "frontend-implementation", scaffold: "nextjs",
+		allowed: []string{"src/components/**"},
+	})
+	if code := cmdValidateTask([]string{"-control", root, "-task", nextTask}); code != exitViolation {
+		t.Errorf("scaffold nextjs tanpa layout.tsx = exit %d, mau %d (H-03)", code, exitViolation)
+	}
+}
+
+// TestCmdValidateTaskScaffoldCoveredByGlob adalah kontrol negatif H-03.
+//
+// Penjaga yang menolak segalanya sama tidak bergunanya dengan yang tidak
+// menolak apa pun. Pola glob yang mencakup berkas scaffolding harus diterima,
+// dan task tanpa field scaffold tidak boleh diperiksa sama sekali.
+func TestCmdValidateTaskScaffoldCoveredByGlob(t *testing.T) {
+	root := controlFixture(t)
+	dir := t.TempDir()
+	silence(t)
+
+	// src/app/** mencakup layout.tsx dan globals.css.
+	covered := writeTask(t, dir, taskOpts{
+		id: "FE-202", repo: "proyek-frontend", role: "frontend-engineer",
+		taskType: "frontend-implementation", scaffold: "nextjs",
+		allowed: []string{"src/app/**"},
+	})
+	if code := cmdValidateTask([]string{"-control", root, "-task", covered}); code != exitOK {
+		t.Errorf("scaffold nextjs dengan src/app/** = exit %d, mau %d", code, exitOK)
+	}
+
+	// Tanpa field scaffold: task pada repo yang sudah berdiri boleh melarang
+	// go.mod. Ini yang membuat H-03 opt-in, bukan universal.
+	optOut := writeTask(t, dir, taskOpts{id: "BE-202"})
+	if code := cmdValidateTask([]string{"-control", root, "-task", optOut}); code != exitOK {
+		t.Errorf("task tanpa scaffold = exit %d, mau %d — H-03 harus opt-in", code, exitOK)
+	}
+}
+
+// TestCmdValidateTaskRejectsMissingContractID menegakkan H-05/H-06.
+func TestCmdValidateTaskRejectsMissingContractID(t *testing.T) {
+	root := controlFixture(t)
+	dir := t.TempDir()
+	silence(t)
+
+	task := writeTask(t, dir, taskOpts{id: "BE-203", contract: "CONTRACT-999"})
+	if code := cmdValidateTask([]string{"-control", root, "-task", task}); code != exitViolation {
+		t.Errorf("contract_ids menunjuk berkas hilang = exit %d, mau %d (H-06)", code, exitViolation)
+	}
+
+	// Kontrol negatif: contract yang ada harus lolos.
+	specs := filepath.Join(root, "control", "tasks", "specifications")
+	if err := os.MkdirAll(specs, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(specs, "CONTRACT-102.yaml"), []byte("# uji\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ok := writeTask(t, dir, taskOpts{id: "BE-204", contract: "CONTRACT-102"})
+	if code := cmdValidateTask([]string{"-control", root, "-task", ok}); code != exitOK {
+		t.Errorf("contract_ids yang ada = exit %d, mau %d", code, exitOK)
+	}
+}
+
+// TestCmdLaunchTaskRejectsStatusNotTechnicalReady menegakkan H-07.
+//
+// Gate TL/SA berada di launch, bukan di validate-handoff: handoff berjalan pada
+// SubagentStop, yaitu setelah kerja habis, dan payload-nya tidak memuat task
+// spec.
+func TestCmdLaunchTaskRejectsStatusNotTechnicalReady(t *testing.T) {
+	root := controlFixture(t)
+	dir := t.TempDir()
+	repo := t.TempDir()
+	wtRoot := t.TempDir()
+	silence(t)
+	t.Setenv("M2S_WORKTREE_ROOT", wtRoot)
+
+	task := writeTask(t, dir, taskOpts{id: "BE-205", status: "draft"})
+	if code := cmdReservePaths([]string{"-control", root, "-task", task}); code != exitOK {
+		t.Fatalf("reservasi = exit %d", code)
+	}
+
+	code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"})
+	if code != exitViolation {
+		t.Errorf("status draft = exit %d, mau %d (H-07)", code, exitViolation)
+	}
+
+	// Penolakan mendahului pembuatan worktree.
+	entries, err := os.ReadDir(wtRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("penolakan H-07 meninggalkan %d entri pada worktree root", len(entries))
+	}
+}
+
+// TestCmdLaunchTaskRejectsBaseBranchMissing menegakkan H-05.
+//
+// `git worktree add ... <base>` gagal dengan exitError bila base tidak ada,
+// yang terbaca sebagai runner rusak. H-05 mengubahnya menjadi kontrak ditolak
+// (exitViolation) dan memindahkannya ke sebelum worktree disentuh.
+func TestCmdLaunchTaskRejectsBaseBranchMissing(t *testing.T) {
+	root := controlFixture(t)
+	dir := t.TempDir()
+	repo := t.TempDir()
+	initGitRepo(t, repo, "main")
+	silence(t)
+	t.Setenv("M2S_WORKTREE_ROOT", t.TempDir())
+
+	// Repository nyata pada main; `develop` tidak ada — H-05 harus menolak.
+	task := writeTask(t, dir, taskOpts{id: "BE-206", base: "develop"})
+	if code := cmdReservePaths([]string{"-control", root, "-task", task}); code != exitOK {
+		t.Fatalf("reservasi = exit %d", code)
+	}
+
+	code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"})
+	if code != exitViolation {
+		t.Errorf("base_branch develop tidak ada = exit %d, mau %d (H-05)", code, exitViolation)
 	}
 }
