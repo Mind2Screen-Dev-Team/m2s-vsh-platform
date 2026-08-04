@@ -48,20 +48,21 @@ write_audit() {
   file_path=$(jq -r '.tool_input.file_path // .tool_input.notebook_path // ""' <<<"$payload" 2>/dev/null || true)
   command=$(jq -r '.tool_input.command // ""' <<<"$payload" 2>/dev/null || true)
   exit_code=$(jq -r '.exit_code // 0' <<<"$result" 2>/dev/null || echo "0")
+  input_tokens=$(jq -r '.tool_input.usage.input_tokens // ""' <<<"$payload" 2>/dev/null || true)
+  output_tokens=$(jq -r '.tool_input.usage.output_tokens // ""' <<<"$payload" 2>/dev/null || true)
 
   local logfile
   logfile=$(locate_log)
 
   # Format: timestamp|agent|tool|path-or-cmd|exit
   if [ -n "$file_path" ]; then
-    echo "$ts|$agent|$tool_name|$file_path|$exit_code" >> "$logfile"
+    echo "$ts|$agent|$tool_name|$file_path|$exit_code|$input_tokens|$output_tokens" >> "$logfile"
   elif [ -n "$command" ]; then
-    # Potong command ke 80 char pertama supaya log tidak terlalu lebar.
     local cmd_short
     cmd_short=$(printf '%.80s' "$command")
-    echo "$ts|$agent|$tool_name|$cmd_short|$exit_code" >> "$logfile"
+    echo "$ts|$agent|$tool_name|$cmd_short|$exit_code|$input_tokens|$output_tokens" >> "$logfile"
   else
-    echo "$ts|$agent|$tool_name|(no-path)|$exit_code" >> "$logfile"
+    echo "$ts|$agent|$tool_name|(no-path)|$exit_code|$input_tokens|$output_tokens" >> "$logfile"
   fi
 
   exit 0
@@ -82,7 +83,7 @@ selftest() {
   ( write_audit "$payload" "$result" >/dev/null ) || true
 
   local logfile="$CLAUDE_PROJECT_DIR/.task/audit.log"
-  if ! grep -q "test-agent|Write|x.go|0" "$logfile"; then
+  if ! grep -q "test-agent|Write|x.go|0||" "$logfile"; then
     rm -rf "$tmp"
     echo "FAIL audit tidak tercatat"
     exit 1
