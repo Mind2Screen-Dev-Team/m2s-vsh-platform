@@ -133,11 +133,11 @@ ditimpa ADR.
 
 | Phase | Isi | Sumber | Status |
 |---|---|---|---|
-| 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | 🟡 berjalan |
+| 0 | Baseline — control repo, pilot project, auth, protected branches | §56 | ✅ **selesai** (29 Juli 2026) — Q1–Q20 final ([phase-0-decision-log](docs/decisions/phase-0-decision-log.md)), 3 repo + branch protection, kapabilitas terverifikasi |
 | 1 | Task Contract dan Runner — schema, validasi, reservasi, launcher | §58 ⇄ | ✅ selesai |
 | 2 | Core Agents — 13 project agent (ADR-005) | §57 ⇄ | ✅ selesai |
 | 3 | Path Enforcement — PreToolUse hook, dangerous-command, CI path validation | §59 | ✅ selesai |
-| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | 🟡 **selesai sebagian** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md) #8) — prasyarat merge kini terpenuhi via ADR-008 + ADR-001 #5 (App + ruleset + review); merge queue menyusul |
+| 4 | GitHub Workflow — PR template, CODEOWNERS, required checks, merge queue | §60 | ✅ **selesai** ([ADR-007](docs/adr/ADR-007-github-workflow-enforcement.md)) — prasyarat merge terpenuhi via ADR-008 + ADR-001 #5 (App + ruleset + review); **merge queue ditunda** v0.1.0 (org Free, Q16 + ADR-007 #3) |
 | 5 | Tool Pilot — 6 skill, 2 agent, Mneme warn, DESIGN.md | §61 | ✅ **selesai** (PR #11, 3 Agustus 2026) |
 | 6 | UI/UX Optional — Open Design pada workspace terisolasi | §62 | ✅ **selesai** (4 Agustus 2026) — struktur `design/` (tokens/flows/wireframes/prototypes/handoff) + handoff flow formal + bukti isolasi design worktree ([phase-6-open-design](docs/operator/phase-6-open-design.md)); supersedes [D-P7-2](docs/decisions/D-P7-2-phase-6-skip.md) |
 | 7 | Multi-Repo Pilot — backend + frontend paralel | §63 | ✅ **selesai** (3 Agustus 2026) — 9 PR: contract, 4 specs, 4 ADR, QA, BE endpoint, CORS, FE StatusCard |
