@@ -74,7 +74,7 @@ repositori aplikasi.
   kontrak di repositori pengatur, bukan lewat kode yang saling merujuk.
 
 ## Supported Tech Stack:
-![Claude Code](https://img.shields.io/badge/Claude_Code-%23D97757.svg?style=plastic&logo=anthropic&logoColor=white) ![9Router](https://img.shields.io/badge/9router-%236366F1.svg?style=plastic&logo=router&logoColor=white)
+![Claude Code](https://img.shields.io/badge/Claude_Code-%23D97757.svg?style=plastic&logo=anthropic&logoColor=white) ![9Router](https://img.shields.io/badge/9router-%236366F1.svg?style=plastic&logo=router&logoColor=white) ![Frontend](https://img.shields.io/badge/Frontend-All_Stack-%2361DAFB.svg?style=plastic&logo=html5&logoColor=white) ![Backend](https://img.shields.io/badge/Backend-All_Stack-%23339933.svg?style=plastic&logo=node.js&logoColor=white) ![Fullstack](https://img.shields.io/badge/Fullstack-Software_Engineering-%23000000.svg?style=plastic&logo=visualstudiocode&logoColor=white) ![Mobile Apps](https://img.shields.io/badge/Mobile-iOS_%26_Android-%23A4C639.svg?style=plastic&logo=android&logoColor=white) ![Database](https://img.shields.io/badge/Database-SQL_%26_NoSQL-%234479A1.svg?style=plastic&logo=databricks&logoColor=white) ![DevOps](https://img.shields.io/badge/DevOps-Cloud_%26_Containerization-%232471A3.svg?style=plastic&logo=docker&logoColor=white) ![Testing](https://img.shields.io/badge/Testing-QA_%26_Automation-%23C21325.svg?style=plastic&logo=testinglibrary&logoColor=white)
 
 ## Status
 
