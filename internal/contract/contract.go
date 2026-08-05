@@ -53,11 +53,22 @@ func NewValidator(schemaDir string) (*Validator, error) {
 
 	// common.schema.json hanya dirujuk lewat $ref, tidak divalidasi langsung.
 	// Ia harus didaftarkan dengan nama relatif yang sama seperti pada $ref.
+	//
+	// Empat schema terakhir (failure, review-report, capability, task-state)
+	// adalah dokumen registry/referensi: belum ada subcommand runner yang
+	// memvalidasinya, sehingga tidak menjadi Kind. Keduanya tetap didaftarkan
+	// karena review-report.schema.json mem-$ref handoff.schema.json — resolusi
+	// $ref menuntut resource-nya ada — dan karena
+	// TestSchemaFilesAreRegistered menuntut setiap *.schema.json terdaftar.
 	for _, name := range []string{
 		"common.schema.json",
 		"task.schema.json",
 		"reservation.schema.json",
 		"handoff.schema.json",
+		"failure.schema.json",
+		"review-report.schema.json",
+		"capability.schema.json",
+		"task-state.schema.json",
 	} {
 		path := filepath.Join(schemaDir, name)
 		f, err := os.Open(path)
