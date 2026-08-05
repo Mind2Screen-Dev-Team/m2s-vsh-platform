@@ -85,6 +85,7 @@ templates/agents/   13 definisi role agent — sumber kanonik (human-only write)
 templates/github/   artefak GitHub kanonik — workflow CI, CODEOWNERS, PR template (§60)
 templates/artifacts/ template artifact — task contract, handoff, failure/review report, ADR, design handoff (§34/§35/§54/§23.7)
 templates/rules/    rules generik kanonik — architecture, security, testing, universal, rule-precedence (deploy: docs/operator/rules-deployment.md)
+templates/governance/ template capability-registry (§41) — deploy: docs/operator/capability-registry-deploy.md
 .claude/agents/     subset yang aktif di control repo: PM dan TL/SA (Q10)
 .github/workflows/  salinan workflow yang berlaku di control repo
 scripts/            wrapper tipis ke bin/m2s — pola scripts/<runner>.sh (Q11)
