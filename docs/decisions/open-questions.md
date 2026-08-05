@@ -31,8 +31,8 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | A-15 | Quality gate command belum diketahui | ✅ tertutup — Q4 |
 | A-16 | Distribusi agent per repository | ✅ tertutup — Q10 |
 | D-01 | Default branch pilot `master` vs control `main` | ✅ tertutup — dieksekusi 2026-07-29 |
-| D-02 | Repo klien private tetap tanpa enforcement | 🔴 **terbuka** |
-| D-03 | Pembatasan hak push/merge hanya untuk repo organization | 🟠 **terbuka, biaya terjawab** — Team **tidak** dibutuhkan; ruleset `restrict updates` membukanya tanpa migrasi (ADR-007 #7). Menunggu GitHub App + V-05 |
+| D-02 | Repo klien private tetap tanpa enforcement | 🟠 **diputuskan** (5 Agustus 2026) — diterima sementara; upgrade GitHub Team bila klien private masuk; GitLab ditolak |
+| D-03 | Pembatasan hak push/merge hanya untuk repo organization | ✅ **tertutup** (2 Agustus 2026) — migrasi org ADR-008 + ruleset `agent-push-restriction`/`agent-worker-restriction`; alur worker→PR→approver→merge teruji (§66 #9) |
 | D-04 | Skala severity ditetapkan schema, bukan arsitektur | ✅ tertutup — disetujui 2026-07-31 |
 | D-05 | Field `project` belum dipakai runner (multi-project) | ✅ diputuskan — model A untuk v0.1.0, model B ke v0.2.0 |
 | V-01…V-08 | Butuh uji empiris | ⏳ Phase 1, 3, 4 (§58, §59, §60) — V-04, V-06, V-07, V-08 sudah terjawab |
@@ -222,31 +222,48 @@ runner tidak pernah memberikan `--add-dir` ke repository yang bukan target task.
 
 ## Isu terbuka
 
-### D-02 — Repository klien private tetap tanpa enforcement 🔴
+### D-02 — Repository klien private tetap tanpa enforcement 🟠 → diputuskan 5 Agustus 2026
 
 **Kondisi:** organization `Mind2Screen-Dev-Team` berada pada plan **Free** dengan
 29 repository private. Seluruhnya tidak dapat memasang branch protection maupun
-rulesets.
+rulesets di GitHub Free.
 
 **Dampak:** jalur repository public membuktikan model arsitektur bekerja, tetapi
 **tidak dapat diterapkan pada project klien** yang wajib private. Untuk klien,
 lapisan anti-overlap #7 dan #8 tetap tidak tertegakkan.
 
-**Opsi:**
+**Keputusan (5 Agustus 2026, owner arsitektur):** **diterima sementara** tanpa
+enforcement untuk klien private. Tidak ada project klien aktif yang terdampak;
+biaya upgrade (~$4/seat × 14) belum terjustifikasi. Catatan: **upgrade ke GitHub
+Team diperlukan** bila klien private pertama masuk — itu jalur yang menutup gap
+dengan biaya paling rendah.
 
-| Opsi | Biaya | Catatan |
-|---|---|---|
-| Upgrade org ke GitHub Team | ~$4/seat/bulan × 14 seat | satu-satunya jalur yang mendukung target akhir |
-| Tetap Free, terima tanpa enforcement untuk klien | 0 | melanggar prinsip #7 dokumen arsitektur |
+**Analisis opsi (5 Agustus 2026):**
+
+| Opsi | Biaya | Enforcement private | Approval wajib | Merge queue | Catatan |
+|---|---|---|---|---|---|
+| GitHub Free (sekarang) | 0 | ❌ private | ❌ | ❌ | klien tanpa enforcement |
+| GitHub Team | ~$4/seat × 14 | ✅ | ✅ (required reviews) | ✅ | jalur termurah utk menutup gap |
+| **Migrasi GitLab Free** | 0 | ✅ protected branch + require MR di **private** | ❌ approval rules = **Premium** | ❌ merge queue = **Premium** | menutup D-02 tapi buka gap approval/merge queue |
+| GitLab Premium | ~$19/seat | ✅ | ✅ | ✅ | termahal, plus port seluruh stack |
+
+**Migrasi GitLab DITOLAK.** GitLab Free menyelesaikan protected branch di repo
+private (yang GitHub Free tidak), tetapi tidak menyelesaikan approval wajib dan
+merge queue — keduanya Premium (~$19/seat). Lebih mahal dari GitHub Team **dan**
+menuntut port seluruh enforcement stack (GitHub Actions, App dua-identitas,
+ruleset, runner m2s) yang ditulis untuk GitHub. GitLab baru layak dipertimbangkan
+bila klien menuntut self-host — bukan sekarang.
 
 **Hambatan:** peran pemilik arsitektur di org adalah `member`, bukan `owner`.
 Upgrade memerlukan persetujuan owner organization.
 
-**Menunggu keputusan.** Tidak memblokir Phase 0–8 pilot.
+**Next:** upgrade ke GitHub Team saat klien private pertama masuk. Sampai saat
+itu, D-02 diterima sebagai risiko — prinsip #7 dilonggarkan eksplisit untuk
+klien private.
 
 ---
 
-### D-03 — Pembatasan hak push/merge hanya tersedia untuk repo organization 🔴
+### D-03 — Pembatasan hak push/merge hanya tersedia untuk repo organization ✅
 
 **Ditemukan 30 Juli 2026** saat mengeksekusi branch protection.
 
@@ -316,10 +333,12 @@ frontend, GitGuardian **ikut** (check-run `GitGuardian Security Checks`, app
 `gitguardian`, `conclusion: "success"` pada SHA `39ab5f2`), rulesets 0 (baseline,
 belum dipasang). V-09 mencatat uji aktual `Integration` bypass di org.
 
-**Menunggu keputusan.** Tidak memblokir Phase 1–4. Yang masih tertahan adalah
-restriction *siapa* boleh merge lewat identitas App — dan V-07 menunjukkan itu
-menuntut migrasi ke organization, bukan sekadar membuat App. Kriteria Done §60
-karena itu tercapai sebagian (ADR-007 #8).
+**Resolusi final (5 Agustus 2026).** D-03 **tertutup** lewat migrasi org
+(ADR-008, 2 Agustus 2026) + ruleset yang sudah terpasang. Alur terbukti: worker
+buka PR → approver `APPROVE` → merge (`merged_by: m2s-approver`); worker tak
+bisa merge (§66 #9 teruji backend + frontend). Catatan ADR-007 #8 "Done tercapai
+sebagian" kini penuh — merge queue adalah satu-satunya butir §60 yang tersisa,
+dan itu ditunda (lihat D-02/§4 keputusan merge queue).
 
 ---
 
