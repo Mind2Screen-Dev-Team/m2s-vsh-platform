@@ -80,6 +80,13 @@ func TestSchemaFilesAreRegistered(t *testing.T) {
 		"task.schema.json":        true,
 		"reservation.schema.json": true,
 		"handoff.schema.json":     true,
+		// Dokumen registry/referensi: didaftarkan sebagai resource agar $ref
+		// ter-resolve, tetapi bukan Kind — belum ada subcommand runner yang
+		// memvalidasinya. Lihat komentar pada NewValidator.
+		"failure.schema.json":       true,
+		"review-report.schema.json": true,
+		"capability.schema.json":    true,
+		"task-state.schema.json":    true,
 	}
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".schema.json") {
