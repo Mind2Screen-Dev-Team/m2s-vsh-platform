@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Melakukan review independen dan read-only atas correctness, maintainability, security, kualitas test, dan kompleksitas berlebih.
-model: opus
+model: gratisan
 effort: high
 permissionMode: plan
 background: true

@@ -1,7 +1,7 @@
 ---
 name: ios-developer
 description: Mengembangkan dan memelihara aplikasi iOS native sesuai arsitektur dan engineering standard yang disetujui project.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true

@@ -1,7 +1,7 @@
 ---
 name: backend-engineer
 description: Mengimplementasikan backend task sesuai contract, arsitektur, path scope, dan acceptance criteria.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true

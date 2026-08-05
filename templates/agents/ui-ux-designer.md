@@ -1,7 +1,7 @@
 ---
 name: ui-ux-designer
 description: Menghasilkan user flow, interface specification, design system, dan design handoff yang dapat diimplementasikan.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true

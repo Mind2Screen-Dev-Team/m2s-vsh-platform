@@ -1,7 +1,7 @@
 ---
 name: devops-release
 description: Mengelola build, CI/CD, container, konfigurasi infrastruktur, staging deployment, dan persiapan rilis.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true

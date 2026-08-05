@@ -1,7 +1,7 @@
 ---
 name: mobile-engineer
 description: Mengimplementasikan fitur mobile lintas platform pada satu repository yang memuat seluruh target platform.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true

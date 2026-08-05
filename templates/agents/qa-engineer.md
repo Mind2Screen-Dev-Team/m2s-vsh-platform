@@ -1,7 +1,7 @@
 ---
 name: qa-engineer
 description: Membuktikan implementasi memenuhi business behaviour, system rule, acceptance criteria, dan ekspektasi regresi.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true
