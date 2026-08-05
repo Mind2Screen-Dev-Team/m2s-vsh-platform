@@ -182,6 +182,7 @@ agent dibangun. Ia **bukan fase tersendiri**.
 | [`docs/adr/ADR-005-additional-engineering-roles.md`](docs/adr/ADR-005-additional-engineering-roles.md) | Empat role engineering tambahan |
 | [`docs/adr/ADR-006-agent-definition-baseline.md`](docs/adr/ADR-006-agent-definition-baseline.md) | Baseline definisi 13 agent, `effort`, prasyarat platform, distribusi role |
 | [`docs/adr/ADR-008-repo-ownership-migration.md`](docs/adr/ADR-008-repo-ownership-migration.md) | Migrasi 3 repo ke org `Mind2Screen-Dev-Team` (prasyarat model dua identitas) |
+| [`docs/adr/ADR-009-client-private-enforcement.md`](docs/adr/ADR-009-client-private-enforcement.md) | Keputusan klaster: D-02 diterima (upgrade Team bila klien masuk), D-03 tertutup, contract Phase 7 diarsip, merge queue ditunda |
 
 ---
 
