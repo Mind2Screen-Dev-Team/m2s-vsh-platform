@@ -17,16 +17,15 @@ agent, branch protection, dan required check `validate-changed-paths` yang aktif
 
 | Repo | Isi | Peran |
 |---|---|---|
-| `m2s-vsh-platform` | control — arsitektur, runner `m2s`, schema task, templates, governance, docs | otoritas konfigurasi |
-| **Repo aplikasi (1+)** | tiap repo = satu stack (BE, FE, mobile, fullstack, dst) | repo yang dikerjakan agent |
+| `m2s-vsh-platform` | repositori pengatur — arsitektur, runner `m2s`, schema task, templates, governance, docs | sumber aturan & konfigurasi |
+| **Repo aplikasi (1+)** | tiap repo = satu jenis (BE, FE, mobile, fullstack, dst) | repo tempat kode produk dibuat |
 
-**Repo aplikasi FLEXIBLE — bukan selalu BE+FE.** Arsitektur mendukung BE+FE,
-BE+mobile, frontend-only, fullstack (BE+FE dalam satu repo), android/ios-native,
-atau kombinasi bebas. Role implementasi dipilih dari yang tersedia
+**Repo aplikasi bisa apa saja — tidak harus backend+frontend.** Arsitektur
+mendukung backend, frontend, mobile, fullstack (backend+frontend dalam satu
+repo), android/ios, atau campuran. Pilih peran pengerja sesuai jenis repo
 (`backend-engineer`, `frontend-engineer`, `fullstack-engineer`,
-`mobile-engineer`, `android-developer`, `ios-developer`) sesuai stack repo.
-Formasi minimal 1 repo aplikasi; jumlah dan kombinasi tak dikunci (ADR-005,
-§46 Multi-Repository Feature).
+`mobile-engineer`, `android-developer`, `ios-developer`). Minimal 1 repo
+aplikasi; jumlah dan kombinasinya bebas (ADR-005, §46 Multi-Repository Feature).
 
 **Project pilot saat ini (real):** 2 repo aplikasi — `m2s-vsh-project-backend`
 (Go) + `m2s-vsh-project-frontend` (Next.js). Ini **keputusan pilot**, bukan
@@ -40,7 +39,7 @@ batasan arsitektur. Klien bebas memilih formasi sendiri.
 - `gh` CLI (authenticated), `git`, `make`, Go ≥ 1.26
 - `age` (enkripsi key GitHub App)
 - Akses model: Anthropic API langsung ATAU proxy 9Router (setup klien sendiri —
-  **jangan** menyalin `ANTHROPIC_BASE_URL` dari org asal, lihat Bagian 2 §8)
+  **jangan** menyalin `ANTHROPIC_BASE_URL` dari org asal, lihat Bagian 2 langkah 10)
 
 ### Konvensi yang berlaku
 
@@ -56,11 +55,13 @@ batasan arsitektur. Klien bebas memilih formasi sendiri.
 
 ## Bagian 2 — Langkah setup berurutan
 
-> **Pembagian peran:** langkah 1–3 dan 8 (clone, build, template sync,
+> **Pembagian peran:** langkah 1–3 dan 10 (clone, build, template sync,
 > konfigurasi model) dapat dijalankan klien — referensi yang disebut di sana
-> client-safe. Langkah 4–7 (GitHub App, branch protection, workflow, verifikasi
-> penegakan) menuntut **dokumen internal** dan identitas penegakan — dijalankan
-> **tim Mind2Screen**, bukan diserahkan sbg dokumen ke klien (lihat Bagian 3).
+> client-safe. Langkah 4–6 dan 9 (GitHub App, branch protection, workflow,
+> verifikasi penegakan) menuntut **dokumen internal** dan identitas penegakan —
+> dijalankan **tim Mind2Screen**, bukan diserahkan sbg dokumen ke klien.
+> Langkah 7–8 (integrasi) menjelaskan cara repo saling terhubung — dibaca utk
+> pemahaman, bukan langkah eksekusi mandiri.
 
 ### 1. Clone + rename ke org klien
 
@@ -203,7 +204,72 @@ repo klien, trigger `branches: [develop, staging]`, job `validate-changed-paths`
 Keselarasan template workflow diperiksa lewat `make verify` (test negatif
 `tests/negative/github-workflow.test.sh`, penegak `tests/lib/check-github-artifacts.sh`).
 
-### 7. Verifikasi end-to-end
+### 7. Integrasi Control repo ↔ Repo aplikasi
+
+Bagian ini menjelaskan **bagaimana repositori pengatur (control) terhubung ke
+tiap repositori aplikasi**. Integrasi lewat **5 titik sambung** berikut:
+
+| # | Titik sambung | File / lokasi | Isi yang disesuaikan klien |
+|---|---|---|---|
+| 1 | **Checkout control di CI app** | `.github/workflows/path-enforcement.yml` di tiap repo aplikasi | baris `repository:` → `<KLIEN-ORG>/m2s-vsh-platform` |
+| 2 | **CODEOWNERS** | `.github/CODEOWNERS` di control + tiap app | `@fajarcandraaa` → `@<KLIEN-OWNER>` |
+| 3 | **Daftar repo (rulesets)** | `tools/apply-rulesets.sh`, `tools/apply-branch-protection.sh` | variabel `REPOS=( ... )` → repo klien |
+| 4 | **Cakupan GitHub App** | pengaturan install App di UI GitHub | restrict ke control + semua repo aplikasi |
+| 5 | **Daftar repo runner** | `README.md` (tabel repo pilot) + field `ownership.repository` di tiap task contract | nama repo → nama repo klien |
+
+**Alur CI (control ↔ app):** saat PR agent dibuka di repo aplikasi, CI app:
+1. checkout repo aplikasi (isi PR)
+2. checkout **control repo** ke folder `.control` (lewat baris `repository:`)
+3. bangun binary `m2s` dari `.control/go.mod`
+4. baca **kontrak tugas** dari `.control/control/tasks/specifications/${TASK_ID}.yaml`
+5. jalankan `validate-changed-paths` — cek path yang berubah sesuai kontrak
+
+Jadi repo aplikasi **mengambil** kontrak + runner dari control repo setiap kali
+CI jalan. Tanpa titik sambung #1, CI app tak bisa menemukan kontrak tugasnya.
+
+**Daftar repo runner:** tidak ada "registrasi repo" terpusat. Runner tahu repo
+aplikasi dari: (a) tabel repo pilot di `README.md`, (b) field
+`ownership.repository` di tiap task contract (`schemas/common.schema.json`).
+Klien cukup menamai repo konsisten di ketiga tempat.
+
+> **Runtime config (belum otomatis):** saat ini CORS backend hardcoded `*`
+> (`internal/handler/status.go`) dan URL API frontend hardcoded
+> `http://localhost:8080` (`StatusDashboard.tsx`). Klien dengan host/port
+> berbeda harus **edit source** kedua file — belum ada file konfigurasi.
+
+### 8. Integrasi Antar Repo Aplikasi
+
+Repo aplikasi (backend, frontend, mobile, dst) **independen — tidak terhubung
+langsung satu sama lain**. Ini by design (arsitektur: "app repo bicara ke
+control; app tak bicara langsung"). Ada dua bentuk keterhubungan:
+
+**A. Ikatan lewat kontrak di control repo (desain):**
+- TL/SA menulis **kontrak API** di control repo (mis. `contracts/CONTRACT-201.yaml`
+  → shape `GET /api/v1/status`)
+- **Backend** implementasi endpoint sesuai kontrak
+- **Frontend** baca kontrak utk tahu shape respon, tulis kode konsumsi
+- Konsistensi dijamin oleh kontrak bersama — bukan kode yang saling referensi
+
+```
+        control repo (kontrak)
+       /                      \
+  backend (implement)     frontend (konsumsi)
+       \                      /
+          runtime: HTTP + CORS
+```
+
+**B. Ikatan runtime (HTTP):**
+- Frontend panggil backend lewat URL (`http://localhost:8080/api/v1/status`)
+- Backend izinkan cross-origin via CORS `*`
+- Klien dengan setup beda: sesuaikan URL di source frontend + pastikan CORS
+  backend mengizinkan origin frontend
+
+**Jika klien butuh repo aplikasi saling terhubung langsung** (mis. backend
+memanggil service lain): arsitektur saat ini mendukung lewat **kontrak** di
+control repo, bukan referensi kode lintas repo. Tambahkan kontrak baru di
+`contracts/`, lalu tiap repo implement/konsumsi via kontrak itu.
+
+### 9. Verifikasi end-to-end
 
 ```bash
 # control
@@ -216,7 +282,7 @@ make verify    # hijau
 
 Referensi status final + checklist: `docs/operator/status-adr001-five-complete.md`.
 
-### 8. Konfigurasi model (Anthropic / 9Router)
+### 10. Konfigurasi model (Anthropic / 9Router)
 
 `~/.claude/settings.json` org asal memakai `ANTHROPIC_BASE_URL:
 http://localhost:20128/v1` (proxy 9Router local) — itu **khusus Mind2Screen**,
