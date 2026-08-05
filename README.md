@@ -1,4 +1,4 @@
-# M2S-VSH Lite
+# M2S Virtual Software House Lite v0.1.0
 
 Workflow pengembangan perangkat lunak berbasis **agen AI** yang terstruktur,
 dapat diaudit, dan dikerjakan paralel.
@@ -72,6 +72,9 @@ repositori aplikasi.
   akhir selalu di tangan manusia.
 - **Repositori aplikasi independen** — backend dan frontend terhubung lewat
   kontrak di repositori pengatur, bukan lewat kode yang saling merujuk.
+
+## Supported Tech Stack:
+![Claude Code](https://img.shields.io/badge/Claude_Code-%23D97757.svg?style=plastic&logo=anthropic&logoColor=white) ![9Router](https://img.shields.io/badge/9router-%236366F1.svg?style=plastic&logo=router&logoColor=white)
 
 ## Status
 
