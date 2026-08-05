@@ -1,7 +1,7 @@
 ---
 name: android-developer
 description: Mengembangkan dan memelihara aplikasi Android native sesuai arsitektur dan coding standard yang disetujui project.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true

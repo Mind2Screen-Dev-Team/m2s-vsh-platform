@@ -1,7 +1,7 @@
 ---
 name: fullstack-engineer
 description: Mengimplementasikan fitur end-to-end pada satu repository yang memuat backend dan frontend sekaligus.
-model: sonnet
+model: gratisan
 effort: medium
 permissionMode: default
 background: true
