@@ -1,0 +1,51 @@
+# CONTRACT-201 — API Contract: Multi-Component Status
+
+schema_version: "1.0"
+
+contract:
+  id: CONTRACT-201
+  title: "GET /api/v1/status — multi-component status"
+  status: approved
+  project: pilot-phase-7
+
+  endpoints:
+    - method: GET
+      path: /api/v1/status
+
+  response:
+    # Backward-compat: field lama dipertahankan (StatusCard lama baca ini).
+    status: ok              # aggregate: ok|degraded|error|unknown (worst-of services)
+    version: "0.1.0"        # versi backend
+    uptime_seconds: 0.0     # uptime proses backend (detik, float)
+    services:               # array 3 komponen, urutan stabil
+      - id: backend-api
+        status: ok          # enum: ok|degraded|error|unknown
+        version: "0.1.0"
+        uptime: 0.0         # detik, float
+        last_checked: "2026-08-05T10:00:00+07:00"  # RFC 3339
+        latency_ms: 12      # int >= 0
+        message: ""
+      - id: database        # probe sintetik (tanpa dep DB nyata)
+        status: ok
+        version: ""
+        uptime: 0.0
+        last_checked: "2026-08-05T10:00:00+07:00"
+        latency_ms: 8
+        message: "synthetic ping ok"
+      - id: auth            # probe sintetik (tanpa service auth nyata)
+        status: ok
+        version: "0.1.0"
+        uptime: 0.0
+        last_checked: "2026-08-05T10:00:00+07:00"
+        latency_ms: 5
+        message: "synthetic ok"
+
+  conventions:
+    - aggregate status = worst of services (error > degraded > ok > unknown)
+    - komponen sintetik (database, auth) lapor ok selama belum ada impl nyata
+    - timestamp RFC 3339; latency_ms int >= 0
+    - urutan services stabil: backend-api, database, auth
+
+  consumer:
+    - frontend-engineer (dashboard multi-status)
+    - qa-engineer (acceptance)
