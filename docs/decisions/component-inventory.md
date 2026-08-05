@@ -34,13 +34,28 @@ Dimiliki **Human Workflow Maintainer**. Berada di control repository.
 | 1 | Dokumen arsitektur baseline | Markdown | ada |
 | 2 | `VERSION` | teks | P0 ✅ |
 | 3 | Decision log, open questions, risk register, capability verification | Markdown | P0 ✅ |
-| 4–10 | 7 JSON Schema — task, handoff, reservation, failure, review-report, capability, task-state | JSON Schema | P1 |
-| 11–17 | 7 template — task contract, handoff, failure report, review report, ADR, DESIGN.md, PR | Markdown/YAML | P1, P6, P9 |
-| 18 | 5 runner script — validate-task, reserve-paths, launch-task, collect-result, release-reservation | shell | P2 |
-| 19 | Library 6 hook | shell | P4 |
+| 4–10 | 7 JSON Schema — task, handoff, reservation, failure, review-report, capability, task-state | JSON Schema | P1 ✅ |
+| 11–17 | 7 template — task contract, handoff, failure report, review report, ADR, DESIGN.md, PR | Markdown/YAML | P1, P6, P9 ✅ |
+| 18 | 5 runner script — validate-task, reserve-paths, launch-task, collect-result, release-reservation | shell | P2 ✅ |
+| 19 | Library 6 hook | shell | P4 ✅ |
 | 20 | 13 template agent definition | Markdown + frontmatter | P2 ✅ |
-| 21 | Template rules generik — architecture, security, testing, universal-agent-rules, rule-precedence | Markdown | P5 |
-| 22 | Template CI workflow + CODEOWNERS + checklist branch protection | YAML | P6 |
+| 21 | Template rules generik — architecture, security, testing, universal-agent-rules, rule-precedence | Markdown | P5 ✅ |
+| 22 | Template CI workflow + CODEOWNERS + checklist branch protection | YAML | P6 ✅ |
+
+**Status backlog (5 Agustus 2026).** Komponen #4–#22 selesai:
+
+- #4–10 — 8 schema di `schemas/` (`common` sebagai kosakata bersama + 7 dokumen).
+  `failure`, `review-report`, `capability`, dan `task-state` adalah dokumen
+  registry/referensi: didaftarkan `NewValidator` agar `$ref` ter-resolve, tetapi
+  bukan `Kind` — belum ada subcommand runner yang memvalidasinya. Diuji
+  `TestRegistrySchemasCompile` + `TestRegistryExamplesValidate`.
+- #11–17 — `templates/artifacts/` (task contract, handoff, failure report,
+  review report, ADR, design handoff) + `templates/github/PULL_REQUEST_TEMPLATE.md`.
+  Template `DESIGN.md` diwujudkan sebagai `design-handoff.md`: design system
+  itu sendiri sudah ada di `design/DESIGN.md` (Phase 5), yang belum ada adalah
+  bentuk handoff-nya (Phase 6).
+- #21 — `templates/rules/`. Deploy ke `.claude/rules/` adalah langkah manusia
+  (`.claude/**` human-only-write) — lihat `docs/operator/rules-deployment.md`.
 
 Ditambah kebijakan platform yang berbentuk dokumen: definisi task state machine (§33),
 severity taxonomy (§48), retry rules (§49), konvensi branch `agent/<task-id>-<slug>`,
@@ -72,7 +87,10 @@ Berada di control repository, di bawah namespace project.
 | Traceability matrix | QA | `qa/**` di app repo |
 
 `DESIGN.md`, design token, flow, wireframe, prototype, dan handoff dimiliki UI/UX
-dan berada di repository frontend (`design/**`).
+pada `design/**`. Phase 6 (§62) menetapkan lokasinya di **control repository**:
+design workspace terisolasi dari application worktree, sehingga design tidak
+pernah menulis repo aplikasi. Repo frontend menerima salinan `design/DESIGN.md` +
+token lewat task sync terpisah. Lihat `docs/operator/phase-6-open-design.md`.
 
 ---
 
@@ -200,7 +218,7 @@ memiliki version + owner + evaluation cases (§39).
 | `block-secret-paths.sh` | PreToolUse | **fail-closed** |
 | `audit-tool-use.sh` | PostToolUse | fail-open (audit), wajib redaksi secret |
 | `validate-handoff.sh` | SubagentStop | **fail-closed** |
-| `worktree-lifecycle.sh` | WorktreeCreate/Remove | ⚠️ **tidak terdaftar di settings.json** (T-04, 2026-08-01) — dirancang fail-closed, tetapi belum dipanggil runtime |
+| `worktree-lifecycle.sh` | WorktreeCreate/Remove | **fail-closed** — terdaftar di `settings.json` (T-04 ditutup; catatan "belum dipanggil runtime" per 2026-08-01 sudah tidak berlaku) |
 
 **Wajib:** `exit 2`, bukan `exit 1` — `exit 1` tidak memblokir apa pun (T-01).
 Setiap hook memeriksa dependensinya di awal dan memiliki self-test.

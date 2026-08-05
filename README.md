@@ -80,9 +80,11 @@ docs/
   adr/              architecture decision records
   decisions/        decision log, open questions, risk register, hasil verifikasi
   system-analysis/  analisis sistem per requirement (owner: TL/SA)
-schemas/            JSON Schema untuk task, handoff, reservation, dll.
+schemas/            JSON Schema — 8: task, handoff, reservation, common + 4 dokumen (failure, review-report, capability, task-state)
 templates/agents/   13 definisi role agent — sumber kanonik (human-only write)
 templates/github/   artefak GitHub kanonik — workflow CI, CODEOWNERS, PR template (§60)
+templates/artifacts/ template artifact — task contract, handoff, failure/review report, ADR, design handoff (§34/§35/§54/§23.7)
+templates/rules/    rules generik kanonik — architecture, security, testing, universal, rule-precedence (deploy: docs/operator/rules-deployment.md)
 .claude/agents/     subset yang aktif di control repo: PM dan TL/SA (Q10)
 .github/workflows/  salinan workflow yang berlaku di control repo
 scripts/            wrapper tipis ke bin/m2s — pola scripts/<runner>.sh (Q11)
@@ -93,9 +95,9 @@ tests/lib/          penegak yang dipakai bersama Makefile dan test negatif
 tests/negative/     uji negatif §68 — enforcement path, bentuk artefak GitHub
 ```
 
-Template task contract, handoff, ADR, dan review report **belum ada** (backlog P1/P6/P9
-`component-inventory.md`); yang tersedia sebagai rujukan bentuk sekarang adalah contoh
-valid di `schemas/examples/`.
+Template artifact dan rules generik berada di `templates/artifacts/` dan
+`templates/rules/` (backlog P1/P6/P9 terbayar 5 Agustus 2026). Contoh bentuk
+dokumen nyata ada di `schemas/examples/`.
 
 Binary `bin/m2s` **dibangun lokal dan tidak di-commit** (ADR-004 #5). Jalankan
 `make build` lebih dulu; wrapper akan menolak dengan pesan jelas bila belum ada.
