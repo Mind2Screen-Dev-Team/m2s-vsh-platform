@@ -1,0 +1,38 @@
+# Handoff Contract — DESIGN-2
+
+Kontrak antara design workspace (ui-ux-designer) dan implementasi frontend
+(frontend-engineer). Bukan task contract runner — referensi silang ke task
+contract FE ada field `fe_task`.
+
+```yaml
+schema_version: "1.0"
+handoff:
+  id: DESIGN-2
+  title: Dashboard multi-status (halaman /status)
+  repository: m2s-vsh-project-frontend
+  status: draft              # draft → approved setelah PM + TL/SA review
+  owner_role: ui-ux-designer
+  consumer_role: frontend-engineer
+  fe_task: FE-202            # referensi silang ke task contract frontend
+  inputs:
+    - design/DESIGN.md
+    - design/tokens/tokens.md
+    - contracts/CONTRACT-201.yaml
+  components:
+    - StatusCard
+    - StatusDashboard
+  states:
+    - loading
+    - empty
+    - success
+    - error
+  breakpoints:
+    - "<640"       # grid-cols-1
+    - "640-1024"   # md:grid-cols-2
+    - ">1024"      # lg:grid-cols-3
+  accessibility:
+    - contrast-aa
+    - prefers-reduced-motion
+    - aria-live-polite
+  approved_by: []
+```
