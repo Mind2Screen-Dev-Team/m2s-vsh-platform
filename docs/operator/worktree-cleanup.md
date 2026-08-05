@@ -38,11 +38,19 @@ tidak ada uncommitted work yang akan hilang.
 | `../m2s-vsh-platform-phase-7-plan-specs` | `worktree-phase-7-planning` |
 | `phase-feature-b-dashboard` | `worktree-phase-feature-b-dashboard` |
 | `worktree-feature-b` | `worktree-feature-b` |
+| `phase-rule-parallel` | `worktree-rule-parallel` |
+| `phase-rule-model` | `worktree-rule-model` |
+| `phase-client-setup-doc` | `worktree-client-setup-doc` |
 
 Feature B (dashboard multi-status) tuntas 5 Agustus 2026: PR #36 (control) +
 BE #17 + FE #8 di-merge ke `main`. `worktree-phase-feature-b-dashboard` tampak
 "unmerged" (2 commit) hanya karena PR #36 di-squash-merge (merge commit
 `26c03ab`); isinya sudah masuk. `worktree-feature-b` tidak punya commit unik.
+
+Rule + setup docs tuntas 5 Agustus 2026: PR #38 (execution-parallel),
+PR #39 (template model gratisan), PR #40 (client-setup) — semua MERGED ke
+`main`. Tiga worktree-nya (phase-rule-parallel, phase-rule-model,
+phase-client-setup-doc) aman dihapus.
 
 ### JANGAN hapus tanpa memeriksa — punya commit yang tidak ada di `main`
 
@@ -67,7 +75,8 @@ for w in \
   phase-4-github-workflow phase-5-cleanup phase-5-docs-update phase-5-tool-pilot \
   fix-be102-contract fix-be102fix-contract phase-7-docs-update \
   fix-fe102-contract qa-102-report phase-8-implementation-prompt \
-  phase-feature-b-dashboard worktree-feature-b; do
+  phase-feature-b-dashboard worktree-feature-b \
+  phase-rule-parallel phase-rule-model phase-client-setup-doc; do
   git worktree remove ".claude/worktrees/$w"
 done
 git worktree remove ../m2s-vsh-platform-phase-7-plan-specs
@@ -90,7 +99,8 @@ for b in \
   worktree-phase-7-docs-update worktree-phase-7-fe-contract-fix \
   worktree-phase-7-planning worktree-phase-7-qa-report \
   worktree-phase-8-implementation-prompt worktree-phase-feature-b-dashboard \
-  worktree-feature-b; do
+  worktree-feature-b worktree-rule-parallel worktree-rule-model \
+  worktree-client-setup-doc; do
   git branch -d "$b"
 done
 ```
