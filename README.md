@@ -1,4 +1,4 @@
-# M2S Virtual Software House Lite v0.1.0
+# M2S Virtual Software House Lite v1.0.0
 
 Workflow pengembangan perangkat lunak berbasis **agen AI** yang terstruktur,
 dapat diaudit, dan dikerjakan paralel.

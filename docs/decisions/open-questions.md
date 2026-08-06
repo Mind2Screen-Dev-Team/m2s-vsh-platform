@@ -3,6 +3,7 @@
 **Tanggal:** 29 Juli 2026
 **Sumber:** analisis `docs/architecture/M2S-VSH-Lite-v0.1.0-Architecture.md`
 **Status:** 14 tertutup, 4 tertutup sebagian, 2 terbuka, 5 menunggu uji empiris
+**Pembaruan 6 Agustus 2026:** keputusan versi 1.0.0 + orkestrator Lapis 2 (lihat bawah)
 
 Register ini melacak setiap bagian dokumen arsitektur yang ambigu, kontradiktif,
 atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitektur,
@@ -34,8 +35,9 @@ atau belum dapat langsung diimplementasikan. Kode `A-*` untuk ambiguitas arsitek
 | D-02 | Repo klien private tetap tanpa enforcement | 🟠 **diputuskan** (5 Agustus 2026) — diterima sementara; upgrade GitHub Team bila klien private masuk; GitLab ditolak |
 | D-03 | Pembatasan hak push/merge hanya untuk repo organization | ✅ **tertutup** (2 Agustus 2026) — migrasi org ADR-008 + ruleset `agent-push-restriction`/`agent-worker-restriction`; alur worker→PR→approver→merge teruji (§66 #9) |
 | D-04 | Skala severity ditetapkan schema, bukan arsitektur | ✅ tertutup — disetujui 2026-07-31 |
-| D-05 | Field `project` belum dipakai runner (multi-project) | ✅ diputuskan — model A untuk v0.1.0, model B ke v0.2.0 |
+| D-05 | Field `project` belum dipakai runner (multi-project) | ✅ diputuskan — model A untuk v0.1.0, model B ke v0.2.0; **6 Agustus 2026** — model A tetap v1.0.0, model B ke v1.1.0 |
 | V-01…V-08 | Butuh uji empiris | ⏳ Phase 1, 3, 4 (§58, §59, §60) — V-04, V-06, V-07, V-08 sudah terjawab |
+| V-11 | Kompatibilitas proxy 9Router dengan tool-use loop Messages API | ⏳ baru — diverifikasi F2 (doc v1.0.0 §79, ADR-010) |
 
 ---
 
@@ -434,6 +436,11 @@ ulang pencocokan konflik.
 **Tertutup sebagai keputusan sadar**, bukan dibiarkan menggantung: model A dipakai
 v0.1.0, model B menjadi lingkup v0.2.0 sesuai pemicu §65. Tidak memblokir Phase 1.
 
+**Pembaruan 6 Agustus 2026 (v1.0.0):** model A **tetap** untuk v1.0.0. Orkestrator
+tidak menambah kunci `project` ke reservation (menghindari migrasi berkas yang
+mahal). Model B menjadi lingkup **v1.1.0**, bukan v0.2.0 — §65 (multi-project
+bottleneck) belum terpicu. Lihat doc v1.0.0 §77.
+
 ---
 
 ## Bagian dokumen arsitektur yang ditimpa ADR
@@ -452,6 +459,8 @@ bagian di bawah, baca ADR-nya lebih dulu.
 | §34 | ADR-004 (R-04) | Ditambah field `shared_file_ownership` |
 | §30, §34 | ADR-004 | Contoh YAML di kedua bagian bersifat **ilustratif**; definisi normatif ada pada `schemas/*.schema.json` |
 | §20.6 | Q4 | Path `tests/unit/**` tidak berlaku untuk repo Go — unit test colocated `_test.go` |
+| §13.4 | ADR-010, doc v1.0.0 §73-§74 | Execution runtime: Claude Code native → loop Messages API; runner Lapis 1 tidak berubah |
+| §13.4 + hooks (§42) | ADR-012, doc v1.0.0 §76 | Boundary A-01: hooks → tool-gate orkestrator untuk engine messages; hooks tetap untuk sesi Claude Code warisan |
 
 ---
 
@@ -471,6 +480,25 @@ bagian di bawah, baca ADR-nya lebih dulu.
 | V-05 | Perilaku `WorktreeCreate` terhadap worktree buatan runner | ✅ **tertutup** — klaim V-05 (2026-08-01) bahwa `worktree-lifecycle.sh` tidak terdaftar **salah**: `WorktreeCreate`/`WorktreeRemove` terdaftar di `.claude/settings.json` sejak Phase 5 (commit `86d415d`), diperbaiki wrapper-nya (`2c16696`, bash -c + `"$0"` untuk path spasi). Self-test lulus di `make verify`. Mitigasi R-26/§42.6 berjalan runtime. T-02 tertutup |
 
 ---
+
+## Keputusan Versi 1.0.0 (6 Agustus 2026)
+
+Label v0.1.1 yang diajukan **ditolak**. Versi = **1.0.0 (MAJOR)**. ADR-011.
+
+Alasan ringkas:
+
+1. §69 semver: perubahan orchestrator + execution runtime = **MAJOR**. Lapis 2
+   orkestrator baru, runtime berubah dari "sesi Claude Code native" menjadi
+   "loop Messages API yang dijalankan binary m2s".
+2. `v0.1.1` adalah kelas "hook validation fixes" (contoh §69) — PATCH untuk
+   perubahan orchestration menipu semver.
+3. **Bukan 0.2.0**: trigger §65 tidak terpicu (eksekusi tetap synchronous, tidak
+   perlu database/durable queue). Container isolation + automated observability
+   (§65) tidak diadopsi di v1.0.0 — kandidat v1.1.0.
+4. Tidak menunggu "production-proven": §69 `1.0.0 Production-proven` adalah
+   deskripsi state, bukan gate semver.
+
+Detail lengkap: `docs/architecture/M2S-VSH-Lite-v1.0.0-Architecture.md` §72.
 
 ## Catatan pemeliharaan
 
