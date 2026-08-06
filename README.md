@@ -52,13 +52,15 @@ repositori aplikasi.
 
 **Alur singkat:**
 
-1. **Kontrak dulu.** Analis teknis menulis kontrak tugas — apa yang dikerjakan,
+1. **Persiapkan acuan.** Launcher `scripts/project-kickoff.sh` menyusun
+   8 dokumen pre-development (Discovery Notes → SDD) sebagai acuan pengembangan.
+2. **Kontrak dulu.** Analis teknis menulis kontrak tugas — apa yang dikerjakan,
    di repo mana, file apa yang boleh diubah.
-2. **Kerjakan paralel.** Engineer backend dan frontend bekerja bersamaan,
+3. **Kerjakan paralel.** Engineer backend dan frontend bekerja bersamaan,
    masing-masing di area terpisah.
-3. **Diperiksa.** Setiap pekerjaan lewat pemeriksaan otomatis (path, kontrak)
+4. **Diperiksa.** Setiap pekerjaan lewat pemeriksaan otomatis (path, kontrak)
    dan ulasan manusia.
-4. **Manusia yang menggabungkan.** Perubahan tidak langsung masuk ke cabang
+5. **Manusia yang menggabungkan.** Perubahan tidak langsung masuk ke cabang
    utama (`main`) — harus lewat alur `agent` → `develop` → `staging` → `main`,
    dan penggabungan akhir dilakukan manusia.
 

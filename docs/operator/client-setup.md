@@ -297,6 +297,49 @@ Anthropic langsung, ganti `model:` di `templates/agents/*.md` ke model Anthropic
 yang valid (`sonnet` / `opus` / `haiku`), lalu sync ke `.claude/agents/`
 (langkah 3). Detail model routing: `docs/operator/execution-parallel.md`.
 
+### 11. Mulai pengembangan — launcher pre-development
+
+Setelah setup selesai (langkah 1-10), klien punya control repo + repo aplikasi
+berjalan. Langkah berikutnya menyiapkan **acuan pengembangan** sebelum task
+contract dibuat. Jalankan launcher (satu kali, dari akar control repo):
+
+```bash
+./scripts/project-kickoff.sh
+```
+
+Launcher menghasilkan **8 dokumen pre-development** ke `control/pre-dev/`:
+
+| File | Dokumen | Penulis (role) |
+|---|---|---|
+| `01-discovery.md` | Discovery Notes | project-manager |
+| `02-brd.md` | BRD | project-manager |
+| `03-sow.md` | SOW | project-manager |
+| `04-prd.md` | PRD | project-manager |
+| `05-uiux.md` | UI/UX Flow | ui-ux-designer |
+| `06-srs.md` | SRS | technical-lead-system-analyst |
+| `07-trd.md` | TRD | technical-lead-system-analyst |
+| `08-sdd.md` | SDD | technical-lead-system-analyst |
+
+Cara kerja launcher:
+- Menyiapkan skill `project-document-builder` (copy dari
+  `templates/skills/project-document-builder/` → `.claude/skills/`) — klien tak
+  perlu menginstal skill manual.
+- Membaca brief dari `control/pre-dev/BRIEF.md`; jika belum ada, menanyakan
+  7 poin (nama project, jenis client, masalah, tujuan, fitur, existing process,
+  constraint) lalu menyimpannya.
+- Satu dokumen per panggilan, **gate manusia di antara**: `y` setujui & lanjut,
+  `r` revisi (feedback → regenerate dokumen yang sama), `n` berhenti, atau
+  teks bebas sebagai jawaban open question (di-append ke dokumen).
+- Setiap dokumen membawa konteks penuh dokumen sebelumnya (konsistensi
+  istilah/scope lintas dokumen).
+- Model default `plan-d-full-free` (gratisan); override dengan env
+  `KICKOFF_MODEL`. Sonnet/opus sengaja bukan default (id Anthropic tak
+  ter-resolve di semua proxy).
+
+Setelah 8 dokumen disetujui, lanjut ke alur normal: buat **task contract**
+per item kerja (`control/tasks/specifications/`), lalu jalankan
+`m2s launch-task <TASK_ID>`.
+
 ---
 
 ## Bagian 3 — Klasifikasi dokumen: INTERNAL vs CLIENT-SAFE
@@ -349,6 +392,8 @@ penegakan.
 | `templates/rules/*.md` | Aturan agent generik (arsitektur, keamanan, testing, precedence) — konten kanonik, bukan mekanika penegakan |
 | `templates/governance/capability-registry.yaml` | Template registry kapabilitas — data, bukan penegakan |
 | `templates/agents/*.md` | Definisi role agent — deskripsi tugas/batas, dipakai klien untuk menjalankan pipeline |
+| `scripts/project-kickoff.sh` | Launcher pre-development — hanya skill + role mapping + prompt, tanpa mekanika penegakan internal |
+| `templates/skills/project-document-builder/` | Skill kanonik (SKILL.md + references) — workflow dokumen generik, konten aman dikirim |
 | `templates/github/CODEOWNERS`, `PULL_REQUEST_TEMPLATE.md` | Artefak GitHub generik |
 | `templates/github/workflows/path-enforcement.yml` | Workflow CI yang klien perlu pasang (validasi path). Isinya kode CI, bukan penjelasan cara melewatinya |
 | Kode repo aplikasi (seed) | Contoh implementasi — endpoint, komponen UI, test |
@@ -378,8 +423,8 @@ dapat dilewati, daftar risiko, app_id, mekanika ruleset/bypass.
 ### Ringkasan eksekutif
 
 > **Kirim ke klien:** dokumen ini + `rules-deployment.md` +
-> `capability-registry-deploy.md` + `templates/` (kecuali `rulesets/*.json`) +
-> ringkasan konsep di atas.
+> `capability-registry-deploy.md` + `scripts/project-kickoff.sh` +
+> `templates/` (kecuali `rulesets/*.json`) + ringkasan konsep di atas.
 > **JANGAN kirim:** dokumen arsitektur kanonik, seluruh `docs/adr/*`,
 > `docs/decisions/*`, `docs/operator/*` lain (branch-protection, org-migration,
 > hook-enforcement, status-adr001, phase-*), `scripts/gh-app-token.sh`,
