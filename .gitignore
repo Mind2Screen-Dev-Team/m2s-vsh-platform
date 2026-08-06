@@ -36,6 +36,15 @@ control/reservations/*.lock
 tmp/
 .cache/
 
+# ── Output launcher pre-development (scripts/project-kickoff.sh) ───────
+# Dokumen pre-dev dihasilkan klien saat runtime, tidak di-commit.
+control/pre-dev/
+
+# ── Skill project-document-builder (runtime extract) ───────────────────
+# Di-extract oleh scripts/project-kickoff.sh dari templates/skills/ saat
+# runtime. Kanonik di templates/skills/, bukan di sini.
+.claude/skills/project-document-builder/
+
 # ── Binary runner: dibangun lokal, tidak di-commit (ADR-004 #5) ────────
 # Source ada di cmd/m2s/**. Bangun dengan `make build`.
 # Binary tidak dapat direview di PR dan terikat platform build-nya.
