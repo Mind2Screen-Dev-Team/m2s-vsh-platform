@@ -1,153 +1,206 @@
 ---
 name: project-start
-description: Titik masuk pengembangan baru. Ketika user memberikan deskripsi project, link design, atau requirement awal — skill ini mengorkestrasi PM agent untuk melakukan structured interview, menulis task contract YAML yang valid, dan memandu user ke m2s launch-task. Gunakan skill ini setiap kali user ingin memulai fitur/project baru tanpa perlu tahu urutan agent yang harus dipakai.
+description: Titik masuk pengembangan baru. User berikan brief project, deskripsi fitur, atau link design — skill mendeteksi jalur (project baru vs fitur spesifik), mengorkestrasi PM dan/atau TL/SA sebagai subagent, menghasilkan requirements + task contract yang siap dijalankan m2s launch-task. User tidak perlu tahu urutan agent atau format contract.
 ---
 
 # Project Start
 
-Skill ini adalah **titik masuk pengembangan** di M2S-VSH. Ia menerima input apapun dari
-user (deskripsi ide, link design, requirement, atau brief singkat) lalu mengorkestrasi
-alur menuju task contract yang siap dijalankan `m2s launch-task`.
+Skill ini adalah **titik masuk pengembangan** di M2S-VSH. Ia menerima input dari user
+(brief project, deskripsi fitur, link design, atau requirement awal) lalu mengorkestrasi
+agent PM dan TL/SA untuk menghasilkan task contract yang siap dieksekusi via
+`m2s launch-task`.
+
+User hanya perlu memberikan **apa yang ingin dibangun**. Semua keputusan teknis
+(paths, acceptance criteria, quality gate, contract format) dikerjakan agent, bukan user.
+
+## Kapan Skill Ini Digunakan
 
 Gunakan skill ini ketika user:
-- Ingin memulai fitur atau project baru
-- Memberikan link design dan minta dianalisa untuk pengembangan
-- Memberikan requirement atau brief dan minta diturunkan ke task
-- Bertanya "dari mana mulai?" atau "bagaimana cara mulai?"
+- Ingin memulai project baru ("saya mau bangun aplikasi X")
+- Ingin menambah fitur baru ke project yang sudah ada
+- Memberikan link design dan minta diterjemahkan ke task
+- Memberikan dokumen pre-dev (`control/pre-dev/`) hasil `project-kickoff.sh`
+- Bertanya "dari mana mulai?" atau "bagaimana cara mulai pengembangan?"
 
-## Filosofi
+## Intake dari User (minimal)
 
-Skill ini **tidak menggantikan** dokumen pre-development (`scripts/project-kickoff.sh`).
-Ia adalah jalur cepat ketika user sudah punya gambaran yang cukup dan ingin langsung
-ke task contract. Jika project belum punya dokumen Discovery/BRD/PRD sama sekali,
-rekomendasikan `project-kickoff.sh` dulu — tapi jangan blokir jika user mau lanjut.
+Kumpulkan hanya informasi berikut — jangan tanya hal teknis ke user:
 
-## Alur Kerja
+1. **Deskripsi**: apa yang ingin dibangun? (bisa berupa teks, link design, atau dokumen)
+2. **Stack** (opsional): frontend, backend, mobile, fullstack — jika belum disebut,
+   PM akan menggali ini lewat structured interview
+3. **Scope kasar** (opsional): apakah ini project baru dari nol, atau penambahan fitur
+   ke project yang sudah ada?
 
-### Fase 1 — Intake & Klarifikasi
+Jika user sudah memberi cukup konteks: langsung tentukan jalur dan lanjut. Jangan
+tanya ulang informasi yang sudah ada.
 
-Lakukan structured interview singkat. Kumpulkan informasi berikut (boleh digabung,
-tidak harus satu per satu jika user sudah memberi cukup konteks):
+Jika user memberikan link design: fetch dan analisa kontennya dulu — ekstrak
+komponen, flow, dan entitas yang terlihat, gunakan sebagai konteks ke PM/TL/SA.
 
-1. **Nama project / fitur** — apa yang akan dibangun
-2. **Stack teknologi** — frontend, backend, mobile, fullstack, atau kombinasi
-3. **Scope** — apa yang IN dan apa yang OUT untuk task ini
-4. **Role yang dibutuhkan** — siapa yang kerjakan (BE engineer, FE engineer, TL/SA, dll)
-5. **Repo target** — nama repo GitHub yang akan disentuh agent
-6. **Path yang boleh disentuh** — file/direktori mana saja yang boleh diubah agent
-7. **Acceptance criteria** — kapan task dianggap selesai (minimal 1 kriteria konkret)
-8. **Quality gate** — perintah verifikasi (`make verify`, `npm test`, dll)
+Jika `control/pre-dev/` sudah berisi dokumen dari `project-kickoff.sh`: baca
+dokumen relevan (PRD, SRS, TRD) sebagai input ke TL/SA — skip PM phase karena
+requirements sudah ada.
 
-Jika user memberikan link design: analisa dulu designnya, ekstrak komponen, API yang
-dibutuhkan, dan flow utama — gunakan itu sebagai bahan intake.
+## Deteksi Jalur
 
-Jika user memberikan dokumen pre-dev (Discovery/BRD/PRD dari `control/pre-dev/`):
-baca dokumen itu sebagai sumber intake, minimalkan pertanyaan ulang.
+Tentukan jalur sebelum spawn agent:
 
-Jika informasi belum cukup untuk menulis contract yang valid: tanyakan poin yang kurang.
-Jangan mengarang path atau acceptance criteria.
+**Jalur PROJECT** — gunakan bila:
+- Brief luas, belum ada requirements sama sekali
+- Project baru dari nol
+- User belum tahu fitur apa yang perlu dibuat
+- Ada banyak role yang akan terlibat (BE + FE + mobile, dst)
 
-### Fase 2 — Tulis Task Contract
+**Jalur FITUR** — gunakan bila:
+- Scope sudah spesifik (satu fitur, satu endpoint, satu screen)
+- Requirements sudah ada (dari pre-dev docs atau user sudah detail)
+- Hanya menyentuh satu repo dan satu role engineer
 
-Setelah intake cukup, tulis task contract YAML ke
-`control/tasks/specifications/<TASK-ID>.yaml`.
+Jika ragu: tanyakan satu pertanyaan — "Ini project baru dari nol atau penambahan
+fitur ke sistem yang sudah ada?"
 
-**Aturan TASK-ID:**
-- Format: `^[A-Z][A-Z0-9]*-[0-9]+$` (contoh: `BE-301`, `FE-301`, `PM-101`)
-- Prefix sesuai domain: `BE` backend, `FE` frontend, `PM` project-management,
-  `CONTRACT` contract-change, `DESIGN` design, `QA` QA, `WIRE` wireframe/UI
-- Nomor: lanjutkan dari ID tertinggi yang ada di `control/tasks/specifications/`
+---
 
-**Format contract (wajib valid terhadap `schemas/task.schema.json`):**
+## Jalur PROJECT — Alur Lengkap
 
-```yaml
-schema_version: "1.0"
+### Langkah 1: Spawn PM Subagent
 
-task:
-  id: <TASK-ID>
-  title: "<judul singkat, imperatif>"
-  type: <lihat enum di bawah>
-  project: <nama project>
-  status: draft
+Spawn `project-manager` sebagai subagent dengan prompt berisi:
+- Brief/deskripsi project dari user (verbatim)
+- Konten design jika ada
+- Konten dokumen pre-dev yang relevan jika ada
+- Instruksi:
 
-ownership:
-  role: <writer role>
-  repository: <nama repo GitHub>
-  base_branch: develop
-  branch: agent/<TASK-ID>-<slug-lowercase>
+```
+Kamu adalah Project Manager. Kerjakan hal berikut berdasarkan brief di atas:
 
-execution:
-  isolation: worktree
-  background: true
-  max_turns: 40
-  timeout_minutes: 30
+1. Lakukan analisa requirement — identifikasi wants vs needs, stakeholder,
+   masalah utama, dan tujuan bisnis.
+2. Tulis dokumen requirement ke control/requirements/REQ-<YYYYMM>-<slug>.md
+   (format markdown, requirement ID per baris, scope + out-of-scope eksplisit).
+3. Tulis backlog awal ke control/backlog/<project-slug>.md — daftar item kerja
+   yang diperlukan, dikelompokkan per komponen/domain, belum perlu urutan prioritas.
+4. Buat usulan pecahan task — untuk setiap item backlog, tentukan:
+   - Jenis task (backend-implementation, frontend-implementation, dll)
+   - Role engineer yang mengerjakan
+   - Repo target
+   - Dependency antar task (jika ada)
+   Tulis ke control/projects/<project-slug>-task-breakdown.md
+5. Catat open question bisnis yang masih perlu dijawab user sebelum lanjut.
 
-paths:
-  allowed:
-    - <path/glob yang boleh ditulis>
-  forbidden:
-    - .claude/**
-    - .task/**
-    - <path lain yang harus dilindungi>
-
-inputs:
-  - <file referensi yang harus dibaca agent>
-
-acceptance_criteria:
-  - "<kriteria konkret, verifiable>"
-
-quality_gates:
-  - <perintah gate, contoh: make verify>
-
-outputs:
-  - pull-request
-
-stop_conditions:
-  - "contract change required"
+Output akhir: path dokumen yang sudah ditulis + ringkasan task breakdown + open question.
 ```
 
-**Enum `task.type`:** `backend-implementation`, `frontend-implementation`,
-`fullstack-implementation`, `mobile-implementation`, `integration`, `bugfix`,
-`refactor`, `test-authoring`, `design`, `documentation`, `devops`, `contract-change`
+### Langkah 2: Gate Manusia (Post-PM)
 
-**Enum `ownership.role` (writer role):** `technical-lead-system-analyst`,
-`ui-ux-designer`, `backend-engineer`, `frontend-engineer`, `fullstack-engineer`,
-`mobile-engineer`, `android-developer`, `ios-developer`, `devops-release`
+Setelah PM selesai:
+- Tampilkan ringkasan: requirements yang ditulis, backlog, usulan task breakdown
+- Tampilkan open question dari PM (jika ada) — minta jawaban user
+- Tanyakan: ada yang perlu diubah sebelum TL/SA menganalisa?
 
-**Catatan `base_branch`:** selalu `develop` untuk task agent (§44). `main` hanya
-untuk PR yang sudah melalui develop → staging → main. Jangan set ke `main`.
+Jangan lanjut ke TL/SA sampai user memberi konfirmasi atau menjawab open question
+yang blocking.
 
-### Fase 3 — Gate Manusia & Petunjuk Lanjut
+### Langkah 3: Spawn TL/SA Subagent (per task atau batch)
 
-Setelah contract ditulis:
+Untuk setiap task dalam breakdown (atau seluruhnya sebagai batch), spawn
+`technical-lead-system-analyst` dengan prompt berisi:
+- Dokumen requirement dari PM (`control/requirements/`)
+- Task breakdown dari PM
+- Jawaban user atas open question PM
+- Instruksi:
 
-1. Tampilkan ringkasan contract (task-id, title, role, repo, paths allowed, criteria).
-2. Tanyakan apakah ada yang perlu diubah sebelum dilanjutkan.
-3. Setelah user setuju, tampilkan perintah untuk menjalankan task:
+```
+Kamu adalah Technical Lead & System Analyst. Kerjakan hal berikut:
 
-```bash
-# dari akar control repo
+1. Baca requirements dari PM dan task breakdown yang diberikan.
+2. Untuk setiap task, tulis task contract YAML ke
+   control/tasks/specifications/<TASK-ID>.yaml yang valid terhadap
+   schemas/task.schema.json. Aturan:
+   - TASK-ID: format [A-Z][A-Z0-9]*-[0-9]+ (contoh BE-301, FE-301)
+     Prefix: BE backend, FE frontend, PM planning, CONTRACT contract-change,
+     DESIGN design, QA quality assurance
+     Nomor: lanjutkan dari ID tertinggi yang ada di control/tasks/specifications/
+   - status: draft (bukan ready — user yang approve)
+   - base_branch: develop (wajib — bukan main)
+   - branch: agent/<TASK-ID>-<slug-lowercase>
+   - paths.forbidden wajib memuat .claude/** dan .task/**
+   - paths.allowed: tentukan berdasarkan jenis task dan repo target
+   - acceptance_criteria: minimal 2, konkret, verifiable
+   - quality_gates: sesuai stack (make verify untuk Go, npm test untuk Node, dst)
+3. Untuk task BE + FE yang independen setelah contract: tandai keduanya agar
+   bisa dijalankan paralel (catat di task breakdown).
+4. Catat open question teknis jika ada dependency atau ambiguitas yang blocking.
+
+Output: path setiap contract yang ditulis + ringkasan per task.
+```
+
+### Langkah 4: Gate Manusia (Post-TL/SA)
+
+Setelah TL/SA selesai:
+- Tampilkan daftar contract yang dibuat (task-id, title, role, repo)
+- Tampilkan open question teknis dari TL/SA (jika ada)
+- Tanyakan: ada yang perlu direvisi?
+
+### Langkah 5: Petunjuk Launch
+
+Setelah user setuju:
+
+```
+Contract siap. Untuk menjalankan:
+
+# Ubah status ke ready dulu (edit manual di file YAML):
+# status: draft  →  status: technical-ready
+
+# Jalankan satu task:
 ./scripts/launch-task.sh <TASK-ID>
+
+# Task BE + FE paralel (jalankan bersamaan):
+./scripts/launch-task.sh BE-XXX
+./scripts/launch-task.sh FE-XXX
 ```
 
-4. Ingatkan: merge akhir ke `main` tetap dilakukan manusia, bukan agent.
+Ingatkan: merge akhir ke `main` tetap dilakukan manusia.
 
-## Aturan Khusus
+---
 
-- **Jangan tulis contract dengan `status: ready` langsung.** Mulai dari `draft`,
-  biarkan user yang approve dan ubah ke `ready` sebelum `launch-task`.
-- **Jangan set `base_branch: main`.** Task agent selalu target `develop`.
-- **`paths.forbidden` wajib memuat `.claude/**` dan `.task/**`** — schema validator
-  akan menolak contract tanpa keduanya.
-- **Satu task = satu contract.** Jika scope besar, pecah jadi beberapa task (BE + FE
-  terpisah, atau fitur A + fitur B terpisah).
-- **Jangan spawn agent tanpa task contract.** Skill ini menghasilkan contract terlebih
-  dahulu; eksekusi agent dimulai oleh user via `launch-task`, bukan oleh skill ini.
+## Jalur FITUR — Fast Path
 
-## Contoh Trigger
+### Langkah 1: Spawn TL/SA Langsung
 
-- "Mulai fitur login, stack Next.js + Go"
-- "Ini design dashboard: [link]. Buat task untuk implementasi FE-nya"
-- "Saya punya PRD di control/pre-dev/04-prd.md, buat task contract untuk fitur booking"
-- "Dari mana saya mulai untuk fitur notifikasi?"
-- "Buat contract untuk BE endpoint `/api/v1/users`"
+Skip PM. Spawn `technical-lead-system-analyst` dengan:
+- Deskripsi fitur dari user
+- Konten design / dokumen pre-dev jika ada
+- Instruksi serupa Langkah 3 Jalur PROJECT di atas, tapi untuk satu task saja
+
+### Langkah 2: Gate + Launch
+
+Sama seperti Langkah 4-5 Jalur PROJECT.
+
+---
+
+## Aturan Wajib untuk Skill Ini
+
+- **Jangan minta user mengisi paths, acceptance criteria, atau quality gate.**
+  Itu domain TL/SA — tanyakan ke user hanya jika TL/SA benar-benar tidak bisa
+  menyimpulkan dari konteks yang ada.
+- **Jangan tulis contract sendiri** kecuali TL/SA gagal spawn (error model/tool).
+  Jika gagal: laporkan error, minta user jalankan `m2s launch-task` manual setelah
+  contract ada, atau retry spawn.
+- **Jangan set status: ready atau base_branch: main** di contract manapun.
+- **Satu task = satu repo.** Jika fitur menyentuh BE + FE, itu dua task terpisah
+  dengan dua contract. TL/SA yang memecahnya.
+- **Jika `control/pre-dev/` sudah berisi PRD/SRS/TRD:** baca dokumen itu dan
+  lewatkan PM phase — requirements sudah ada. Mulai dari TL/SA.
+
+## Batas yang Didukung M2S-VSH Saat Ini
+
+- **PM** dapat ditulis ke: `control/requirements/**`, `control/backlog/**`,
+  `control/projects/**`, `control/tasks/status/**`
+- **TL/SA** dapat ditulis ke: `control/tasks/specifications/**`, `contracts/**`,
+  `docs/system-analysis/**`
+- **Merge** ke `main` selalu dilakukan manusia — agent hanya sampai PR
+- **Task paralel** (BE + FE) didukung via dua `launch-task` terpisah
+- **PM tidak bisa spawn TL/SA langsung** — orchestration dilakukan skill ini
+  (main session) yang spawn keduanya secara berurutan
