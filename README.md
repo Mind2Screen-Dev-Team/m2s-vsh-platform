@@ -54,8 +54,9 @@ repositori aplikasi.
 
 1. **Persiapkan acuan.** Launcher `scripts/project-kickoff.sh` menyusun
    8 dokumen pre-development (Discovery Notes → SDD) sebagai acuan pengembangan.
-2. **Kontrak dulu.** Analis teknis menulis kontrak tugas — apa yang dikerjakan,
-   di repo mana, file apa yang boleh diubah.
+2. **Kontrak dulu.** Skill `project-start` (atau analis teknis) menurunkan brief
+   menjadi kontrak tugas — apa yang dikerjakan, di repo mana, file apa yang
+   boleh diubah.
 3. **Kerjakan paralel.** Engineer backend dan frontend bekerja bersamaan,
    masing-masing di area terpisah.
 4. **Diperiksa.** Setiap pekerjaan lewat pemeriksaan otomatis (path, kontrak)

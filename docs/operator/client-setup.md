@@ -340,6 +340,21 @@ Setelah 8 dokumen disetujui, lanjut ke alur normal: buat **task contract**
 per item kerja (`control/tasks/specifications/`), lalu jalankan
 `m2s launch-task <TASK_ID>`.
 
+**Alternatif cepat:** jika tidak menjalankan `project-kickoff.sh` (misal hanya
+analisa design/link), gunakan skill **`project-start`** untuk memulai pengembangan
+langsung. Skill ini menerima brief/deskripsi/link design dari user, lalu
+mengorkestrasi alur menuju task contract:
+
+- **Jalur project** — brief luas: spawn PM agent → tulis requirements +
+  backlog + task breakdown → gate manusia → spawn TL/SA → tulis task contracts
+  → gate manusia → `launch-task`.
+- **Jalur fitur** — scope spesifik: skip PM, langsung spawn TL/SA → tulis
+  contract → gate → `launch-task`.
+
+Skill aktif setelah di-deploy ke `.claude/skills/` (langkah 3 template sync).
+Trigger dengan `/project-start` atau cukup berikan brief/deskripsi project
+ke sesi Claude.
+
 ---
 
 ## Bagian 3 — Klasifikasi dokumen: INTERNAL vs CLIENT-SAFE
@@ -394,6 +409,7 @@ penegakan.
 | `templates/agents/*.md` | Definisi role agent — deskripsi tugas/batas, dipakai klien untuk menjalankan pipeline |
 | `scripts/project-kickoff.sh` | Launcher pre-development — hanya skill + role mapping + prompt, tanpa mekanika penegakan internal |
 | `templates/skills/project-document-builder/` | Skill kanonik (SKILL.md + references) — workflow dokumen generik, konten aman dikirim |
+| `templates/skills/project-start/` | Skill kanonik titik masuk pengembangan — brief → task contract via PM/TL/SA, konten prosedur, aman dikirim |
 | `templates/github/CODEOWNERS`, `PULL_REQUEST_TEMPLATE.md` | Artefak GitHub generik |
 | `templates/github/workflows/path-enforcement.yml` | Workflow CI yang klien perlu pasang (validasi path). Isinya kode CI, bukan penjelasan cara melewatinya |
 | Kode repo aplikasi (seed) | Contoh implementasi — endpoint, komponen UI, test |
