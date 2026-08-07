@@ -73,7 +73,7 @@ Berada di control repository, di bawah namespace project.
 | Project registry entry | PM | `control/projects/**` |
 | Requirements + `REQ-*` | PM | `control/requirements/**` |
 | Backlog + prioritas | PM | `control/backlog/**` |
-| Task status | PM | `control/tasks/status/**` |
+| Task status | Runner + role (tabel owner ADR-011) | `control/tasks/status/**` |
 | Release scope | PM | `control/releases/**` |
 | Project report | PM | `control/reports/**` |
 | System analysis | TL/SA | `docs/system-analysis/**` |

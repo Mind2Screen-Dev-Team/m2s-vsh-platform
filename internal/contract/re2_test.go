@@ -82,11 +82,13 @@ func TestSchemaFilesAreRegistered(t *testing.T) {
 		"handoff.schema.json":     true,
 		// Dokumen registry/referensi: didaftarkan sebagai resource agar $ref
 		// ter-resolve, tetapi bukan Kind — belum ada subcommand runner yang
-		// memvalidasinya. Lihat komentar pada NewValidator.
+		// memvalidasinya. Lihat komentar pada NewValidator. Pengecualian:
+		// task-status menjadi Kind (ADR-011), divalidasi runner update-status.
 		"failure.schema.json":       true,
 		"review-report.schema.json": true,
 		"capability.schema.json":    true,
 		"task-state.schema.json":    true,
+		"task-status.schema.json":   true,
 	}
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".schema.json") {

@@ -441,6 +441,15 @@ func TestCmdCollectResult(t *testing.T) {
 		t.Fatalf("reservasi = exit %d", code)
 	}
 
+	// Alur nyata: launch-task menulis running sebelum agent jalan. collect-result
+	// kini menulis status dari handoff (ADR-011), yang menuntut transisi
+	// reserved → running → implementation-complete.
+	repo := t.TempDir()
+	initGitRepo(t, repo, "develop")
+	if code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"}); code != exitOK {
+		t.Fatalf("launch = exit %d", code)
+	}
+
 	handoff := writeHandoff(t, dir, "BE-101")
 
 	// Tanpa -pr: hanya memvalidasi, tidak menyentuh reservasi.
@@ -480,6 +489,12 @@ func TestCmdReleaseReservation(t *testing.T) {
 	task := writeTask(t, dir, taskOpts{id: "BE-101"})
 	if code := cmdReservePaths([]string{"-control", root, "-task", task}); code != exitOK {
 		t.Fatalf("reservasi = exit %d", code)
+	}
+
+	repo := t.TempDir()
+	initGitRepo(t, repo, "develop")
+	if code := cmdLaunchTask([]string{"-control", root, "-task", task, "-repo", repo, "-dry-run"}); code != exitOK {
+		t.Fatalf("launch = exit %d", code)
 	}
 
 	// Worker tidak boleh melepas (§30).
