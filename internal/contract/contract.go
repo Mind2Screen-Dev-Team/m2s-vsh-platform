@@ -28,6 +28,7 @@ const (
 	KindTask        Kind = "task"
 	KindReservation Kind = "reservation"
 	KindHandoff     Kind = "handoff"
+	KindTaskStatus  Kind = "task-status"
 )
 
 func (k Kind) schemaFile() string { return string(k) + ".schema.json" }
@@ -54,12 +55,13 @@ func NewValidator(schemaDir string) (*Validator, error) {
 	// common.schema.json hanya dirujuk lewat $ref, tidak divalidasi langsung.
 	// Ia harus didaftarkan dengan nama relatif yang sama seperti pada $ref.
 	//
-	// Empat schema terakhir (failure, review-report, capability, task-state)
-	// adalah dokumen registry/referensi: belum ada subcommand runner yang
-	// memvalidasinya, sehingga tidak menjadi Kind. Keduanya tetap didaftarkan
-	// karena review-report.schema.json mem-$ref handoff.schema.json — resolusi
-	// $ref menuntut resource-nya ada — dan karena
-	// TestSchemaFilesAreRegistered menuntut setiap *.schema.json terdaftar.
+	// Lima schema terakhir (failure, review-report, capability, task-state,
+	// task-status) adalah dokumen registry/referensi: task-status menjadi Kind
+	// di bawah; sisanya belum ada subcommand runner yang memvalidasinya. Semua
+	// tetap didaftarkan karena review-report.schema.json mem-$ref handoff.schema.json
+	// dan task-status.schema.json mem-$ref common.schema.json — resolusi $ref
+	// menuntut resource-nya ada — dan karena TestSchemaFilesAreRegistered
+	// menuntut setiap *.schema.json terdaftar.
 	for _, name := range []string{
 		"common.schema.json",
 		"task.schema.json",
@@ -69,6 +71,7 @@ func NewValidator(schemaDir string) (*Validator, error) {
 		"review-report.schema.json",
 		"capability.schema.json",
 		"task-state.schema.json",
+		"task-status.schema.json",
 	} {
 		path := filepath.Join(schemaDir, name)
 		f, err := os.Open(path)
@@ -86,7 +89,7 @@ func NewValidator(schemaDir string) (*Validator, error) {
 	}
 
 	v := &Validator{schemaDir: schemaDir, compiled: map[Kind]*jsonschema.Schema{}}
-	for _, k := range []Kind{KindTask, KindReservation, KindHandoff} {
+	for _, k := range []Kind{KindTask, KindReservation, KindHandoff, KindTaskStatus} {
 		s, err := c.Compile(schemaBaseURI + k.schemaFile())
 		if err != nil {
 			return nil, fmt.Errorf("mengompilasi %s: %w", k.schemaFile(), err)

@@ -40,6 +40,7 @@ func main() {
 		{"launch-task", "Siapkan worktree dan materialisasi contract", cmdLaunchTask},
 		{"collect-result", "Kumpulkan dan validasi handoff", cmdCollectResult},
 		{"release-reservation", "Lepas reservasi setelah merge", cmdReleaseReservation},
+		{"update-status", "Tulis status task dengan validasi transisi + owner", cmdUpdateStatus},
 		{"check-path", "Putuskan satu operasi tulis terhadap contract (dipakai hook)", cmdCheckPath},
 		{"validate-changed-paths", "Periksa daftar changed file PR terhadap contract (dipakai CI)", cmdValidateChangedPaths},
 	}

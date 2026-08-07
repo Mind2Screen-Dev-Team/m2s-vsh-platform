@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,21 +13,51 @@ import (
 	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/contract"
 	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/pathmatch"
 	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/registry"
+	"github.com/Mind2Screen-Dev-Team/m2s-vsh-platform/internal/status"
 )
 
 const lockTimeout = 30 * time.Second
 
-// setup memuat validator dan registry dari akar control repository.
-func setup(control string) (*contract.Validator, *registry.Registry, error) {
+// setup memuat validator, registry, dan store status dari akar control
+// repository.
+func setup(control string) (*contract.Validator, *registry.Registry, *status.Store, error) {
 	v, err := contract.NewValidator(filepath.Join(control, "schemas"))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	reg, err := registry.Open(filepath.Join(control, "control", "reservations"), v)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return v, reg, nil
+	st, err := status.Open(filepath.Join(control, "control", "tasks", "status"), v)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return v, reg, st, nil
+}
+
+// writeStatus menulis status task §33 dengan validasi transisi terhadap status
+// yang ada (ADR-011). Runner menulis status deterministic di titik yang sudah
+// ada; by selalu role pemilik task.
+//
+// Idempotent: transisi ke status yang sama tidak mengubah berkas (prinsip
+// runner). Berkas yang belum ada diizinkan tanpa cek transisi dari.
+func writeStatus(st *status.Store, taskID, to, by string, extra map[string]any) error {
+	cur, err := st.Read(taskID)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return st.Write(taskID, to, by, "", extra)
+		}
+		return err
+	}
+	from := cur.Status()
+	if from == to {
+		return nil // no-op
+	}
+	if !status.TransitionAllowed(from, to) {
+		return fmt.Errorf("transisi %s → %s tidak diizinkan (state machine §33)", from, to)
+	}
+	return st.Write(taskID, to, by, "", extra)
 }
 
 // scaffoldFiles mendaftar berkas yang scaffolding sebuah stack PASTI hasilkan.
@@ -110,7 +141,7 @@ func cmdValidateTask(args []string) int {
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
-	v, _, err := setup(control)
+	v, _, _, err := setup(control)
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
@@ -166,7 +197,7 @@ func cmdReservePaths(args []string) int {
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
-	v, reg, err := setup(control)
+	v, reg, st, err := setup(control)
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
@@ -258,6 +289,12 @@ func cmdReservePaths(args []string) int {
 		return fail(exitError, "%v", err)
 	}
 
+	// ADR-011: runner tulis status deterministic. active → reserved (by = role
+	// pemilik task). Idempotent: transisi ke status yang sama tidak mengubah.
+	if err := writeStatus(st, taskID, "reserved", str(task, "ownership.role"), nil); err != nil {
+		return fail(exitError, "%v", err)
+	}
+
 	fmt.Printf("ok  %s direservasi — %d path pada %s\n", taskID, len(allowed), repo)
 	return exitOK
 }
@@ -281,7 +318,7 @@ func cmdLaunchTask(args []string) int {
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
-	v, reg, err := setup(control)
+	v, reg, st, err := setup(control)
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
@@ -439,6 +476,13 @@ func cmdLaunchTask(args []string) int {
 		return fail(exitError, "%v", err)
 	}
 
+	// ADR-011: reserved → running begitu worktree siap. Ditulis sebelum dry-run
+	// agar dry-run pun (launch sukses) menandai task hidup — state machine
+	// reserved → running adalah prasyarat collect-result berikutnya.
+	if err := writeStatus(st, taskID, "running", str(task, "ownership.role"), nil); err != nil {
+		return fail(exitError, "%v", err)
+	}
+
 	if *dryRun {
 		fmt.Printf("ok  dry-run — sesi agent tidak dijalankan\n")
 		return exitOK
@@ -466,7 +510,7 @@ func cmdCollectResult(args []string) int {
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
-	v, reg, err := setup(control)
+	v, reg, st, err := setup(control)
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
@@ -481,8 +525,20 @@ func cmdCollectResult(args []string) int {
 	}
 
 	taskID, _ := doc["task_id"].(string)
-	status, _ := doc["status"].(string)
-	fmt.Printf("ok  handoff %s valid — status %s\n", taskID, status)
+	handoffStatus, _ := doc["status"].(string)
+	role, _ := doc["role"].(string)
+	fmt.Printf("ok  handoff %s valid — status %s\n", taskID, handoffStatus)
+
+	// ADR-011: runner menulis status yang dilaporkan agent pada handoff
+	// (implementation-complete, blocked, failed, dst). Status runner-owned
+	// (reviewing) tidak ditulis dari sini — itu transisi setelah PR terbuka,
+	// ditangani collect-review (ADR-012) agar gate implementation-complete
+	// tetap berlaku.
+	if handoffStatus != "" {
+		if err := writeStatus(st, taskID, handoffStatus, role, nil); err != nil {
+			return fail(exitError, "%v", err)
+		}
+	}
 
 	if *prURL == "" {
 		return exitOK
@@ -528,7 +584,7 @@ func cmdReleaseReservation(args []string) int {
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
-	_, reg, err := setup(control)
+	_, reg, st, err := setup(control)
 	if err != nil {
 		return fail(exitError, "%v", err)
 	}
@@ -558,7 +614,90 @@ func cmdReleaseReservation(args []string) int {
 	if err := reg.Transition(*taskID, target, map[string]any{"released_by": *by}); err != nil {
 		return fail(exitViolation, "%v", err)
 	}
+
+	// ADR-011 #4: sinkron reservasi → §33. Runner menulis status task mengikuti
+	// status reservasi (active→reserved, reserved-pending-merge→merge-ready,
+	// released→released, cancelled→cancelled). by = role pemilik task.
+	//
+	// Best-effort: bila transisi task ke status target tidak sah menurut state
+	// machine (mis. task masih implementation-complete saat release), release
+	// reservasi tetap jalan — release adalah operasi reservasi (Q12), bukan
+	// transisi status task. Status task baru maju lewat jalurnya sendiri.
+	if to := status.FromReservationStatus(target); to != "" {
+		res, gerr := reg.Get(*taskID)
+		if gerr == nil {
+			if err := writeStatus(st, *taskID, to, res.OwnerRole(), nil); err != nil {
+				fmt.Printf("m2s: status task %s tidak disinkronkan (%v) — reservasi tetap %s\n",
+					*taskID, err, target)
+			}
+		}
+	}
 	fmt.Printf("ok  reservasi %s → %s oleh %s\n", *taskID, target, *by)
+	return exitOK
+}
+
+// --- update-status ---
+
+// cmdUpdateStatus menulis status task §33 lewat agent (ADR-011 opsi B).
+//
+// Validasi tiga lapis: status anggota enum taskStatus (schema), transisi sah
+// dari status saat ini (state machine §33), dan role penulis berhak atas status
+// itu (tabel owner ADR-011, prinsip #4). Agent memanggil lewat runner dengan
+// identitas role-nya — by tidak pernah "runner".
+func cmdUpdateStatus(args []string) int {
+	fs := newFlagSet("update-status")
+	taskID := fs.String("task", "", "task ID")
+	statusVal := fs.String("status", "", "taskStatus target (state machine §33)")
+	by := fs.String("by", "", "role yang menulis (tabel owner ADR-011)")
+	reason := fs.String("reason", "", "alasan transisi (opsional)")
+	controlFlag := fs.String("control", "", "akar control repository")
+	if err := fs.Parse(args); err != nil {
+		return exitError
+	}
+	if *taskID == "" || *statusVal == "" || *by == "" {
+		return fail(exitError, "-task, -status, dan -by wajib diisi")
+	}
+
+	control, err := controlRoot(*controlFlag)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+	_, _, st, err := setup(control)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+
+	// Owner: role penulis harus berhak atas status target. Berlaku untuk status
+	// apa pun — runner-owned (reserved, running, dst) menolak semua agent.
+	if !status.CanWrite(*by, *statusVal) {
+		reportViolations("update-status ditolak", []string{
+			fmt.Sprintf("%s tidak boleh menulis status %s (tabel owner ADR-011)", *by, *statusVal),
+		})
+		return exitViolation
+	}
+
+	// Transisi: dari status yang ada. Berkas belum ada → tulis langsung (status
+	// awal task, mis. technical-ready oleh TL/SA).
+	cur, err := st.Read(*taskID)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return fail(exitError, "%v", err)
+		}
+	} else if !status.TransitionAllowed(cur.Status(), *statusVal) {
+		reportViolations("update-status ditolak", []string{
+			fmt.Sprintf("transisi %s → %s tidak diizinkan (state machine §33)", cur.Status(), *statusVal),
+		})
+		return exitViolation
+	}
+
+	if err := st.Write(*taskID, *statusVal, *by, *reason, nil); err != nil {
+		if ve, ok := err.(*contract.ValidationError); ok {
+			reportViolations(ve.Error(), ve.Violations)
+			return exitViolation
+		}
+		return fail(exitError, "%v", err)
+	}
+	fmt.Printf("ok  %s → %s oleh %s\n", *taskID, *statusVal, *by)
 	return exitOK
 }
 
