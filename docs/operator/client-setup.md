@@ -337,8 +337,12 @@ Cara kerja launcher:
   ter-resolve di semua proxy).
 
 Setelah 8 dokumen disetujui, lanjut ke alur normal: buat **task contract**
-per item kerja (`control/tasks/specifications/`), lalu jalankan
-`m2s launch-task <TASK_ID>`.
+per item kerja (`control/tasks/specifications/`), lalu jalankan pipeline otomatis
+per task: `./scripts/pipeline.sh --task <TASK_ID>`.
+Pipeline menangani implementasi, review, dan QA secara otomatis hingga status `merge-ready`.
+Untuk menjalankan beberapa task paralel (misal BE + FE), jalankan di background:
+`./scripts/pipeline.sh --task BE-XXX & ./scripts/pipeline.sh --task FE-XXX & wait`.
+Pastikan status task di contract diubah ke `technical-ready` sebelum pipeline dijalankan.
 
 **Alternatif cepat:** jika tidak menjalankan `project-kickoff.sh` (misal hanya
 analisa design/link), gunakan skill **`project-start`** untuk memulai pengembangan
