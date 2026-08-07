@@ -148,6 +148,15 @@ data sudah ada. Tidak perlu agent tambahan.
   event-driven; apakah `documented`/`staging-verified` butuh runner terpisah atau cukup
   agent; kapan ADR-010 (Projects) aktif.
 
+## Out of scope — orkestrasi agent (auto-spawn)
+
+ADR ini **tidak** mengotomasi spawn code-reviewer atau QA. Saat ini keduanya
+di-spawn manual (tak ada `launch-qa`, tak ada `launch-review`). Status hidup yang
+dibangun ADR-011 menjadi **prasyarat** untuk otomasi spawn: begitu
+`implementation-complete` ditulis otomatis, status itu bisa jadi trigger
+code-reviewer/QA dijalankan. Otomasi spawn dibahas ADR-012 (proposed, terpisah),
+dan menunggu ADR-011 approved sebagai fondasi status.
+
 ## Backward compatibility / rollback
 
 - Tidak mengubah perilaku agent yang ada. `reserve-paths`/`launch-task`/`collect-result`
