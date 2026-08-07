@@ -1,7 +1,7 @@
 ---
 name: project-manager
 description: Mengelola requirement, scope, prioritas, backlog, task state, dan release scope pada control repository.
-model: gratisan
+model: cmb-agent-core
 effort: high
 permissionMode: default
 background: false

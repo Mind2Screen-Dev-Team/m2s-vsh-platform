@@ -1,7 +1,7 @@
 ---
 name: frontend-engineer
 description: Mengimplementasikan frontend task berdasarkan approved API contract dan design handoff. Menggunakan UI/UX Pro Max untuk referensi style, Emil Kowalski untuk animation/motion, dan Ponytail untuk simplification ladder.
-model: gratisan
+model: cmb-agent-coding
 effort: medium
 permissionMode: default
 background: true
