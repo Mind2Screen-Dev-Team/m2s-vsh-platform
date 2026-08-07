@@ -1,42 +1,56 @@
 #!/usr/bin/env bash
 #
-# review.sh — orchestrator auto-spawn Code Reviewer (ADR-012).
+# review.sh — spawn Code Reviewer untuk satu task (ADR-012).
 #
-# Runner siapkan (gate + reservasi implementer), orchestrator spawn agent.
-# m2s TIDAK spawn agent sendiri — pola sama launch-task (runner tipis).
+# Dipakai standalone atau dipanggil pipeline.sh. Menggabungkan:
+#   m2s launch-review (gate) → spawn claude code-reviewer → m2s collect-review
 #
-# Alur: launch-review (gate implementation-complete)
-#   → claude -p di worktree (agent code-reviewer, plan mode read-only)
-#   → collect-review (handoff → reviewing / changes-requested)
-#
-# Spawn memakai claude CLI dengan agent code-reviewer (permissionMode plan).
-# Worktree sudah disiapkan runner; agent cwd = worktree.
+# Pemakaian:
+#   ./scripts/review.sh --task <id> [--control <path>] [--dry-run]
 
 set -euo pipefail
 
-: "${M2S_ROOT:?M2S_ROOT tidak di-set — akar control repository.}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+M2S_ROOT="${M2S_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 M2S_BIN="${M2S_BIN:-$M2S_ROOT/bin/m2s}"
 
-usage() {
-  echo "Pemakaian: $0 --task <id> [--control <path>]" >&2
-  exit 1
-}
-
-task=""
-control="$M2S_ROOT"
-while [ $# -gt 0 ]; do
+task="" control="$M2S_ROOT" dry_run=false
+while [[ $# -gt 0 ]]; do
   case "$1" in
-    --task) task="$2"; shift 2 ;;
+    --task)    task="$2";    shift 2 ;;
     --control) control="$2"; shift 2 ;;
-    *) usage ;;
+    --dry-run) dry_run=true; shift   ;;
+    *) echo "pemakaian: $0 --task <id> [--control <path>] [--dry-run]" >&2; exit 1 ;;
   esac
 done
-[ -n "$task" ] || usage
+[[ -n "$task" ]] || { echo "review.sh: --task wajib diisi" >&2; exit 1; }
 
-"$M2S_BIN" launch-review --task "$task" --control "$control"
+# Baca worktree dari reservasi
+res="$control/control/reservations/$task.yaml"
+WT=$(grep -m1 '^worktree:' "$res" 2>/dev/null | sed 's/^worktree: *//' | tr -d '"')
+[[ -n "$WT" ]] || { echo "review.sh: reservasi $task tidak ditemukan" >&2; exit 1; }
 
-# Spawn Code Reviewer di worktree. Runner mencetak instruksi dengan repo/branch/
-# worktree; untuk otomasi penuh, worktree diambil dari reservasi.
-# NOTE: claude -p adalah titik di mana agent benar-benar dijalankan.
-# Digantikan oleh orchestrator project bila alur berbeda (mis. GitHub Actions).
-echo "spawn code-reviewer untuk $task — agent dijalankan terpisah (manual/CI)"
+# Model + tools code-reviewer
+MODEL=$(grep -m1 '^model:' "$M2S_ROOT/.claude/agents/code-reviewer.md" 2>/dev/null | awk '{print $2}')
+TOOLS=$(grep -m1 '^tools:' "$M2S_ROOT/.claude/agents/code-reviewer.md" 2>/dev/null \
+  | sed 's/^tools: *\[//;s/\]//;s/[[:space:]]//g')
+
+echo "[review:$task] launch-review (gate implementation-complete)"
+$dry_run || "$M2S_BIN" launch-review --task "$task" --control "$control"
+$dry_run && echo "[dry-run] launch-review --task $task"
+
+echo "[review:$task] spawn code-reviewer model=$MODEL"
+$dry_run || rm -f "$WT/.task/handoff.json"
+$dry_run || (cd "$WT" && printf '%s' \
+  "Kamu adalah code-reviewer. Review diff PR task $task (read-only).
+Baca .task/contract.json. Tulis review report ke .task/handoff.json
+(role code-reviewer, wajib: decision, changed_files: [], tests, findings bila request-changes)." \
+  | claude --print --model "$MODEL" --allowedTools "$TOOLS" > /dev/null) || true
+$dry_run && echo "[dry-run] claude --print --model $MODEL --allowedTools $TOOLS"
+
+echo "[review:$task] collect-review"
+$dry_run || "$M2S_BIN" collect-review \
+  --handoff "$WT/.task/handoff.json" --control "$control"
+$dry_run && echo "[dry-run] collect-review --handoff $WT/.task/handoff.json"
+
+echo "[review:$task] selesai"

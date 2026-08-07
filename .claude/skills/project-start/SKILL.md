@@ -143,25 +143,41 @@ Setelah TL/SA selesai:
 - Tampilkan open question teknis dari TL/SA (jika ada)
 - Tanyakan: ada yang perlu direvisi?
 
-### Langkah 5: Petunjuk Launch
+### Langkah 5: Launch Pipeline
 
-Setelah user setuju:
+Setelah user setuju (atau jawab "jalankan semua" / "jalankan BE-XXX"):
 
+Tampilkan daftar task yang siap jalan (status `technical-ready`):
 ```
-Contract siap. Untuk menjalankan:
-
-# Ubah status ke ready dulu (edit manual di file YAML):
-# status: draft  →  status: technical-ready
-
-# Jalankan satu task:
-./scripts/launch-task.sh <TASK-ID>
-
-# Task BE + FE paralel (jalankan bersamaan):
-./scripts/launch-task.sh BE-XXX
-./scripts/launch-task.sh FE-XXX
+Task siap dijalankan:
+  BE-XXX — <judul>  (role: backend-engineer)
+  FE-XXX — <judul>  (role: frontend-engineer)
 ```
 
-Ingatkan: merge akhir ke `main` tetap dilakukan manusia.
+Tanya user: "Mau jalankan task mana? (bisa sebut ID spesifik, atau 'semua' / 'bersamaan')"
+
+Berdasarkan jawaban user, eksekusi pipeline lewat Bash:
+
+**Satu task:**
+```bash
+./scripts/pipeline.sh --task BE-XXX
+```
+
+**Beberapa task paralel ("semua" / "bersamaan" / sebut beberapa ID):**
+```bash
+./scripts/pipeline.sh --task BE-XXX &
+./scripts/pipeline.sh --task FE-XXX &
+wait && echo "semua pipeline selesai"
+```
+
+Pipeline otomatis rantai: `reserve-paths → launch-task → spawn implementer
+→ collect-result → spawn reviewer → collect-review → spawn QA → collect-qa → merge-ready`.
+Tiap spawn menampilkan role dan model yang digunakan.
+
+Fix loop otomatis (maks 3×): bila reviewer minta changes atau QA temukan defect,
+implementer di-spawn ulang di worktree yang sama tanpa membuat worktree baru.
+
+Ingatkan: merge akhir ke `main` tetap dilakukan manusia setelah `merge-ready`.
 
 ---
 
