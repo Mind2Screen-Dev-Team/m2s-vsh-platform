@@ -1,7 +1,7 @@
 ---
 name: technical-lead-system-analyst
 description: Menerjemahkan kebutuhan bisnis menjadi system behaviour, technical design, contract, dan technical task yang konsisten.
-model: gratisan
+model: cmb-agent-core
 effort: high
 permissionMode: default
 background: true

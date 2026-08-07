@@ -299,8 +299,13 @@ func TestEveryRoleHasEffort(t *testing.T) {
 func TestDeployedAgentsMatchTemplates(t *testing.T) {
 	// Q10: control repository menjalankan PM + TL/SA (Phase 1). Phase 5
 	// (§61) menambah frontend-engineer + technical-writer untuk tool pilot.
-	// Sepuluh sisanya di-deploy ke repo aplikasi pada Phase 7 (§63).
-	want := []string{"frontend-engineer", "project-manager", "technical-lead-system-analyst", "technical-writer"}
+	// Semua 13 role kini di-deploy (2026-08-07) — lihat templates/agents/.
+	want := []string{
+		"android-developer", "backend-engineer", "code-reviewer", "devops-release",
+		"frontend-engineer", "fullstack-engineer", "ios-developer", "mobile-engineer",
+		"project-manager", "qa-engineer", "technical-lead-system-analyst",
+		"technical-writer", "ui-ux-designer",
+	}
 
 	deployed := deployedAgentDir(t)
 	entries, err := os.ReadDir(deployed)

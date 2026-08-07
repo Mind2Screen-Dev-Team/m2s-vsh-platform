@@ -64,7 +64,7 @@ Konfigurasi model BUKAN Anthropic API langsung. `~/.claude/settings.json`
 ```json
 {
   "env": { "ANTHROPIC_BASE_URL": "http://localhost:20128/v1" },
-  "model": "gratisan"
+  "model": "m2s-vsh-combo"
 }
 ```
 

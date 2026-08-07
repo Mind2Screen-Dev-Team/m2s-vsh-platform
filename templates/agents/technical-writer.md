@@ -1,7 +1,7 @@
 ---
 name: technical-writer
 description: Menjaga dokumentasi pengguna, operator, developer, dan rilis tetap konsisten dengan implementasi yang telah disetujui. Menerapkan stop-slop untuk menghilangkan pola penulisan AI dari prosa.
-model: gratisan
+model: cmb-agent-light
 effort: low
 permissionMode: default
 background: true

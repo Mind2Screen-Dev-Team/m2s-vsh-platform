@@ -23,7 +23,7 @@ SKILL_DIR="$M2S_ROOT/.claude/skills/project-document-builder"
 OUT_DIR="$M2S_ROOT/control/pre-dev"
 BRIEF_FILE="$OUT_DIR/BRIEF.md"
 
-# Model default gratisan (kompatibel proxy 9Router / session). Override lewat
+# Model default m2s-vsh-combo (kompatibel proxy 9Router / session). Override lewat
 # env KICKOFF_MODEL. JANGAN default sonnet/opus — id Anthropic gagal via proxy.
 MODEL="${KICKOFF_MODEL:-plan-d-full-free}"
 TIMEOUT_S="${KICKOFF_TIMEOUT:-300}"

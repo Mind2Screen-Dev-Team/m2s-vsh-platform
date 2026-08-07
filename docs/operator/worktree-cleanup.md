@@ -48,7 +48,7 @@ BE #17 + FE #8 di-merge ke `main`. `worktree-phase-feature-b-dashboard` tampak
 `26c03ab`); isinya sudah masuk. `worktree-feature-b` tidak punya commit unik.
 
 Rule + setup docs tuntas 5 Agustus 2026: PR #38 (execution-parallel),
-PR #39 (template model gratisan), PR #40 (client-setup) — semua MERGED ke
+PR #39 (template model m2s-vsh-combo), PR #40 (client-setup) — semua MERGED ke
 `main`. Tiga worktree-nya (phase-rule-parallel, phase-rule-model,
 phase-client-setup-doc) aman dihapus.
 

@@ -292,7 +292,7 @@ JANGAN disalin. Klien pakai:
 - Proxy/9Router sendiri, set `ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN` +
   `ANTHROPIC_MODEL` sesuai setup klien.
 
-Agent template memakai `model: gratisan` (nama combo 9Router). Kalau klien pakai
+Agent template memakai `model: m2s-vsh-combo` (nama combo 9Router). Kalau klien pakai
 Anthropic langsung, ganti `model:` di `templates/agents/*.md` ke model Anthropic
 yang valid (`sonnet` / `opus` / `haiku`), lalu sync ke `.claude/agents/`
 (langkah 3). Detail model routing: `docs/operator/execution-parallel.md`.
@@ -332,7 +332,7 @@ Cara kerja launcher:
   teks bebas sebagai jawaban open question (di-append ke dokumen).
 - Setiap dokumen membawa konteks penuh dokumen sebelumnya (konsistensi
   istilah/scope lintas dokumen).
-- Model default `plan-d-full-free` (gratisan); override dengan env
+- Model default `plan-d-full-free` (m2s-vsh-combo); override dengan env
   `KICKOFF_MODEL`. Sonnet/opus sengaja bukan default (id Anthropic tak
   ter-resolve di semua proxy).
 
@@ -442,9 +442,9 @@ dapat dilewati, daftar risiko, app_id, mekanika ruleset/bypass.
 - **Bahasa dokumen:** Bahasa Indonesia (konvensi repo — pertahankan di doc klien).
 - **Versi baseline:** v0.1.0. Perubahan MAJOR (model kontrol, orchestrator,
   boundary) perlu ADR baru.
-- **Model:** `templates/agents/*.md` memakai `model: gratisan` (combo 9Router
+- **Model:** `templates/agents/*.md` memakai `model: m2s-vsh-combo` (combo 9Router
   org asal). Klien yang pakai Anthropic langsung harus ganti ke `sonnet`/`opus`
-  dan sync `.claude/agents/`. Risiko: `gratisan` = `deepseek-v4-flash-free`,
+  dan sync `.claude/agents/`. Risiko: `m2s-vsh-combo` = `deepseek-v4-flash-free`,
   kualitas rendah utk role berat (pm/tl-sa/code-reviewer).
 - **Merge queue** ditunda ke v0.2.0 (org Free, ADR-007 #3) — tak ada di setup.
 - **Multi-project** (field `project` runner) model B ke v0.2.0 (D-05).
