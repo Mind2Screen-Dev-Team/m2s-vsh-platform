@@ -57,6 +57,7 @@ agency, passive voice, meta-commentary, dan vague declarative.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: documented)
 - Membaca seluruh repository
 - Mengubah documentation-owned path
 - Menjalankan doc lint dan link check

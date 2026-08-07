@@ -53,6 +53,7 @@ acceptance criteria, dan ekspektasi regresi.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: defect-found, merge-ready)
 - Membaca application code
 - Menulis QA plan, test case, integration test, E2E test, dan fixture pada
   QA-owned path

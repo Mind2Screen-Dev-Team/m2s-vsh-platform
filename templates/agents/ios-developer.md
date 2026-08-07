@@ -66,6 +66,7 @@ standard yang disetujui project.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Mengubah kode sumber iOS pada allowed paths
 - Mengubah asset iOS pada allowed paths
 - Membuat unit test dan UI test

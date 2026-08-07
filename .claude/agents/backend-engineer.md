@@ -50,6 +50,7 @@ Hanya backend module dan unit test yang tercantum pada task contract.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Membaca seluruh repository
 - Mengubah backend module pada allowed paths
 - Mengubah unit test colocated
