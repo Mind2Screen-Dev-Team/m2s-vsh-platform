@@ -41,6 +41,10 @@ func holdsPath(status string) bool {
 	return status == StatusActive || status == StatusReservedPendingMerge
 }
 
+// HoldsPath adalah bentuk exported dari holdsPath, dipakai runner review/QA
+// untuk memastikan path implementer masih ditahan saat diff diambil.
+func HoldsPath(status string) bool { return holdsPath(status) }
+
 // Registry adalah direktori reservasi pada control repository.
 type Registry struct {
 	dir       string

@@ -54,6 +54,7 @@ dan persiapan rilis secara terisolasi dari implementasi feature.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: staging-verified)
 - Mengubah infra-owned path
 - Membaca application code untuk konteks build
 - Menjalankan validasi Docker dan infrastruktur

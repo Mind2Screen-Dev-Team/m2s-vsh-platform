@@ -69,6 +69,7 @@ beririsan (ADR-006 #4, §E2.6).
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: draft, technical-ready)
 - Menulis analysis doc, architecture doc, ADR, contract, dan task technical specification
 - Membaca seluruh repository
 - Melakukan technical spike read-only atau isolated proof of concept bila disetujui

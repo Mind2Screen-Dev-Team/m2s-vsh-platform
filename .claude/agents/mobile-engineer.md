@@ -50,6 +50,7 @@ dengan `android/` dan `ios/` sebagai direktori.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Mengubah kode sumber bersama pada allowed paths
 - Mengubah kode spesifik platform pada allowed paths
 - Membuat unit test dan widget/component test

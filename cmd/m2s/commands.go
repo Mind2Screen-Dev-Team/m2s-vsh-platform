@@ -636,6 +636,249 @@ func cmdReleaseReservation(args []string) int {
 	return exitOK
 }
 
+// --- launch-review ---
+
+// cmdLaunchReview menyiapkan sesi Code Reviewer (ADR-012 #1).
+//
+// Gate: status task = implementation-complete. Spawn agent dilakukan
+// orchestrator luar (scripts/review.sh) — runner hanya menyiapkan: memeriksa
+// gate, membaca reservasi implementer untuk branch/repo, dan mencetak
+// instruksi. Code Reviewer read-only (A-03) tidak memegang reservasi baru.
+func cmdLaunchReview(args []string) int {
+	fs := newFlagSet("launch-review")
+	taskID := fs.String("task", "", "task ID")
+	controlFlag := fs.String("control", "", "akar control repository")
+	if err := fs.Parse(args); err != nil {
+		return exitError
+	}
+	if *taskID == "" {
+		return fail(exitError, "-task wajib diisi")
+	}
+
+	control, err := controlRoot(*controlFlag)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+	_, reg, st, err := setup(control)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+
+	// Gate ADR-012: hanya spawn review bila implementer menyatakan selesai.
+	cur, err := st.Read(*taskID)
+	if err != nil {
+		return fail(exitViolation, "%s — launch-review menuntut implementation-complete", *taskID)
+	}
+	if cur.Status() != "implementation-complete" {
+		return fail(exitViolation,
+			"%s berstatus %s — launch-review menuntut implementation-complete (ADR-012)",
+			*taskID, cur.Status())
+	}
+
+	// Ambil reservasi implementer untuk branch + repo. Reservasi harus masih
+	// menahan path (active/pending-merge) agar diff review dapat diambil.
+	res, err := reg.Get(*taskID)
+	if err != nil {
+		return fail(exitViolation, "%s belum memiliki reservasi", *taskID)
+	}
+	if !registry.HoldsPath(res.Status()) {
+		return fail(exitViolation, "reservasi %s berstatus %s — review menuntut path masih ditahan", *taskID, res.Status())
+	}
+
+	fmt.Printf("siap  jalankan code-reviewer (read-only) dengan repo %s branch %s worktree %s\n",
+		res.Repository(), res.Branch(), res.Worktree())
+	return exitOK
+}
+
+// --- collect-review ---
+
+// cmdCollectReview menulis hasil review dari handoff Code Reviewer (ADR-012 #1).
+//
+// Handoff memakai schema handoff.schema.json dengan decision (review-report
+// adalah superstructure). Runner menulis status atas nama code-reviewer —
+// reviewer read-only tidak memegang file status (Q9, A-03).
+func cmdCollectReview(args []string) int {
+	fs := newFlagSet("collect-review")
+	handoffPath := fs.String("handoff", "", "path handoff review (.yaml)")
+	controlFlag := fs.String("control", "", "akar control repository")
+	if err := fs.Parse(args); err != nil {
+		return exitError
+	}
+	if *handoffPath == "" {
+		return fail(exitError, "-handoff wajib diisi")
+	}
+
+	control, err := controlRoot(*controlFlag)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+	v, _, st, err := setup(control)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+
+	doc, err := v.Load(*handoffPath, contract.KindHandoff)
+	if err != nil {
+		if ve, ok := err.(*contract.ValidationError); ok {
+			reportViolations(ve.Error(), ve.Violations)
+			return exitViolation
+		}
+		return fail(exitError, "%v", err)
+	}
+
+	taskID, _ := doc["task_id"].(string)
+	role, _ := doc["role"].(string)
+	if role != "code-reviewer" {
+		return fail(exitViolation, "collect-review menuntut role code-reviewer, dapat %s", role)
+	}
+	decision, _ := doc["decision"].(string)
+
+	// Approve / approve-with-nonblocking-notes → reviewing (menunggu QA).
+	// request-changes → changes-requested (kembali implementer). by = code-reviewer
+	// sesuai tabel owner ADR-011; runner hanya menyalin keputusan reviewer.
+	switch decision {
+	case "approve", "approve-with-nonblocking-notes":
+		if err := writeStatus(st, taskID, "reviewing", role, nil); err != nil {
+			return fail(exitViolation, "%v", err)
+		}
+		fmt.Printf("ok  review %s approve — status reviewing\n", taskID)
+	case "request-changes":
+		if err := writeStatus(st, taskID, "changes-requested", role, nil); err != nil {
+			return fail(exitViolation, "%v", err)
+		}
+		fmt.Printf("ok  review %s request-changes — status changes-requested\n", taskID)
+	default:
+		return fail(exitViolation, "decision tak dikenal: %s", decision)
+	}
+	return exitOK
+}
+
+// --- launch-qa ---
+
+// cmdLaunchQA menyiapkan sesi QA Engineer (ADR-012 #2).
+//
+// Gate: status task = reviewing (review approve, belum QA). Spawn agent oleh
+// orchestrator luar. QA read-write, tetapi tanpa reservasi terpisah: worktree
+// QA dibuat dari branch PR yang sama, path QA (tests/** dst) tidak beririsan
+// dengan reserved_paths implementer (batas dibahas ADR-012 konsekuensi).
+func cmdLaunchQA(args []string) int {
+	fs := newFlagSet("launch-qa")
+	taskID := fs.String("task", "", "task ID")
+	controlFlag := fs.String("control", "", "akar control repository")
+	if err := fs.Parse(args); err != nil {
+		return exitError
+	}
+	if *taskID == "" {
+		return fail(exitError, "-task wajib diisi")
+	}
+
+	control, err := controlRoot(*controlFlag)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+	_, reg, st, err := setup(control)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+
+	cur, err := st.Read(*taskID)
+	if err != nil {
+		return fail(exitViolation, "%s — launch-qa menuntut reviewing", *taskID)
+	}
+	if cur.Status() != "reviewing" {
+		return fail(exitViolation,
+			"%s berstatus %s — launch-qa menuntut reviewing (ADR-012)", *taskID, cur.Status())
+	}
+
+	res, err := reg.Get(*taskID)
+	if err != nil {
+		return fail(exitViolation, "%s belum memiliki reservasi", *taskID)
+	}
+	if !registry.HoldsPath(res.Status()) {
+		return fail(exitViolation, "reservasi %s berstatus %s — QA menuntut path masih ditahan", *taskID, res.Status())
+	}
+
+	// ADR-011: qa-testing ditulis saat QA mulai (reviewing → qa-testing).
+	// dari sini QA pass → ci-passed → merge-ready atau defect-found → running.
+	if err := writeStatus(st, *taskID, "qa-testing", "qa-engineer", nil); err != nil {
+		return fail(exitViolation, "%v", err)
+	}
+
+	fmt.Printf("siap  jalankan qa-engineer dengan repo %s branch %s worktree %s\n",
+		res.Repository(), res.Branch(), res.Worktree())
+	return exitOK
+}
+
+// --- collect-qa ---
+
+// cmdCollectQA menulis hasil QA dari handoff (ADR-012 #2).
+//
+// Handoff QA: status implementation-complete / defect-found + findings. Runner
+// menulis status atas nama qa-engineer. Fix loop ADR-012 #5: defect-found →
+// running agar implementer lanjut di worktree sama.
+func cmdCollectQA(args []string) int {
+	fs := newFlagSet("collect-qa")
+	handoffPath := fs.String("handoff", "", "path handoff QA (.yaml)")
+	controlFlag := fs.String("control", "", "akar control repository")
+	if err := fs.Parse(args); err != nil {
+		return exitError
+	}
+	if *handoffPath == "" {
+		return fail(exitError, "-handoff wajib diisi")
+	}
+
+	control, err := controlRoot(*controlFlag)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+	v, _, st, err := setup(control)
+	if err != nil {
+		return fail(exitError, "%v", err)
+	}
+
+	doc, err := v.Load(*handoffPath, contract.KindHandoff)
+	if err != nil {
+		if ve, ok := err.(*contract.ValidationError); ok {
+			reportViolations(ve.Error(), ve.Violations)
+			return exitViolation
+		}
+		return fail(exitError, "%v", err)
+	}
+
+	taskID, _ := doc["task_id"].(string)
+	role, _ := doc["role"].(string)
+	if role != "qa-engineer" {
+		return fail(exitViolation, "collect-qa menuntut role qa-engineer, dapat %s", role)
+	}
+	statusVal, _ := doc["status"].(string)
+
+	switch statusVal {
+	case "defect-found":
+		// ADR-012 #5: defect → running, implementer perbaiki di worktree sama.
+		// Transisi dari qa-testing (ditulis launch-qa) — §33: qa-testing →
+		// defect-found → running.
+		if err := writeStatus(st, taskID, "defect-found", role, nil); err != nil {
+			return fail(exitViolation, "%v", err)
+		}
+		if err := writeStatus(st, taskID, "running", role, nil); err != nil {
+			return fail(exitViolation, "%v", err)
+		}
+		fmt.Printf("ok  QA %s defect — status running (fix loop ADR-012)\n", taskID)
+	case "implementation-complete", "ci-passed":
+		// QA pass: qa-testing → ci-passed → merge-ready (qa-testing sudah
+		// ditulis launch-qa).
+		for _, to := range []string{"ci-passed", "merge-ready"} {
+			if err := writeStatus(st, taskID, to, role, nil); err != nil {
+				return fail(exitViolation, "%v", err)
+			}
+		}
+		fmt.Printf("ok  QA %s pass — status merge-ready\n", taskID)
+	default:
+		return fail(exitViolation, "status QA tak dikenal: %s", statusVal)
+	}
+	return exitOK
+}
+
 // --- update-status ---
 
 // cmdUpdateStatus menulis status task §33 lewat agent (ADR-011 opsi B).

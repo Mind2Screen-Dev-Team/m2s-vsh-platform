@@ -52,6 +52,7 @@ implementasi lebih dikehendaki daripada memecah pekerjaan.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Mengubah berkas implementasi backend pada allowed paths
 - Mengubah berkas implementasi frontend pada allowed paths
 - Membuat dan memperbarui unit test kedua lapisan

@@ -65,6 +65,7 @@ agent execution report, QA dan review status.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: clarification, merge-ready, terminal)
 - Membaca seluruh repository untuk konteks
 - Menulis pada control repository paths
 - Membuat requirement, backlog, task state, dan status report

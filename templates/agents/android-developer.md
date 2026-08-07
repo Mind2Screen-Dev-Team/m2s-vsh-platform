@@ -50,6 +50,7 @@ standard, dan praktik yang disetujui project.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Mengubah kode sumber Android pada allowed paths
 - Mengubah resource Android pada allowed paths
 - Membuat unit test dan instrumentation test

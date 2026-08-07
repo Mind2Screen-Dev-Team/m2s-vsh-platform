@@ -50,6 +50,7 @@ tercantum pada task contract.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Mengubah frontend path yang spesifik terhadap feature
 - Mengubah test yang spesifik terhadap feature
 - Memakai komponen design-system yang sudah ada

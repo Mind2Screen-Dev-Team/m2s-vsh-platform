@@ -60,6 +60,7 @@ technical constraint, design system yang sudah ada.
 
 ## Allowed
 
+- Menjalankan `scripts/update-status.sh` untuk status yang menjadi haknya (tabel owner ADR-011: implementation-complete)
 - Memakai Open Design pada design workspace terisolasi
 - Menulis design document dan prototype
 - Mengusulkan component pattern
