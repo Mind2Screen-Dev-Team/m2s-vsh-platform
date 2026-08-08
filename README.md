@@ -59,9 +59,13 @@ repositori aplikasi.
    boleh diubah.
 3. **Kerjakan paralel.** Engineer backend dan frontend bekerja bersamaan,
    masing-masing di area terpisah.
-4. **Diperiksa.** Setiap pekerjaan lewat pemeriksaan otomatis (path, kontrak)
+4. **Pipeline otomatis.** Setelah kontrak disetujui dan status task diubah ke
+   `technical-ready`, jalankan `./scripts/pipeline.sh --task <ID>`. Pipeline
+   mengurus implementasi, review, dan QA hingga status `merge-ready`. Task paralel
+   (BE + FE) dapat dijalankan di background: `./scripts/pipeline.sh --task BE-XXX & ./scripts/pipeline.sh --task FE-XXX & wait`.
+5. **Diperiksa.** Setiap pekerjaan lewat pemeriksaan otomatis (path, kontrak)
    dan ulasan manusia.
-5. **Manusia yang menggabungkan.** Perubahan tidak langsung masuk ke cabang
+6. **Manusia yang menggabungkan.** Perubahan tidak langsung masuk ke cabang
    utama (`main`) — harus lewat alur `agent` → `develop` → `staging` → `main`,
    dan penggabungan akhir dilakukan manusia.
 
